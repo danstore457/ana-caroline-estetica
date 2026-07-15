@@ -1,0 +1,6 @@
+{
+  "name": "Ana Carolina - Beleza e Estética",
+  "description": "Um site elegante e completo para agendamento online de serviços de estética e beleza.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

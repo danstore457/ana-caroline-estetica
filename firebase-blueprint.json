@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "booking": {
+      "title": "Booking",
+      "description": "An appointment/booking for an aesthetic procedure",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the booking" },
+        "serviceId": { "type": "string", "description": "The ID of the service booked" },
+        "clientName": { "type": "string", "description": "Name of the client", "maxLength": 100 },
+        "clientPhone": { "type": "string", "description": "WhatsApp contact of the client", "maxLength": 30 },
+        "clientEmail": { "type": "string", "description": "Email address of the client", "maxLength": 100 },
+        "date": { "type": "string", "description": "The date of booking in YYYY-MM-DD format", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "time": { "type": "string", "description": "The time of booking in HH:MM format", "pattern": "^\\d{2}:\\d{2}$" },
+        "status": { "type": "string", "enum": ["pendente", "confirmado", "concluido", "cancelado"], "description": "The current status of the booking" },
+        "notes": { "type": "string", "description": "Additional notes/requests from the client", "maxLength": 500 },
+        "createdAt": { "type": "string", "description": "ISO timestamp of creation" }
+      },
+      "required": ["id", "serviceId", "clientName", "clientPhone", "clientEmail", "date", "time", "status", "createdAt"]
+    },
+    "blocked_slot": {
+      "title": "Blocked Slot",
+      "description": "A specific date or date+time blocked by the owner",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "description": "The blocked date in YYYY-MM-DD format", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "time": { "type": "string", "description": "The blocked time in HH:MM format, or empty if whole day is blocked" }
+      },
+      "required": ["date"]
+    },
+    "service": {
+      "title": "Service",
+      "description": "An aesthetic procedure or service offered",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique service identifier" },
+        "name": { "type": "string", "description": "The name of the service", "maxLength": 100 },
+        "description": { "type": "string", "description": "Detailed service description", "maxLength": 1000 },
+        "category": { "type": "string", "enum": ["facial", "corporal", "olhar", "depilacao", "cursos"], "description": "Service category" },
+        "price": { "type": "number", "description": "Price of the service in BRL" },
+        "duration": { "type": "number", "description": "Duration in minutes" },
+        "popular": { "type": "boolean", "description": "Whether the service is popular/highlighted" }
+      },
+      "required": ["id", "name", "description", "category", "price", "duration"]
+    },
+    "campaign": {
+      "title": "Campaign",
+      "description": "A campaign or laser day event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Campaign unique identifier" },
+        "serviceId": { "type": "string", "description": "ID of the associated service" },
+        "dates": { "type": "array", "description": "Dates scheduled for the campaign in YYYY-MM-DD format" },
+        "notes": { "type": "string", "description": "Additional promotional notes", "maxLength": 500 }
+      },
+      "required": ["id", "serviceId", "dates"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "booking",
+      "description": "Public/client and admin reservation data"
+    },
+    "/blocked_slots/{slotId}": {
+      "schema": "blocked_slot",
+      "description": "Blocked date/time records"
+    },
+    "/services/{serviceId}": {
+      "schema": "service",
+      "description": "List of aesthetic procedures"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": "campaign",
+      "description": "Active promotional events and campaigns"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Bookings collection rules
+    match /bookings/{bookingId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isValidBooking(incoming()) && isValidId(bookingId);
+      allow update: if isValidBooking(incoming()) && isValidId(bookingId);
+      allow delete: if isValidId(bookingId);
+    }
+
+    // Blocked Slots collection rules
+    match /blocked_slots/{slotId} {
+      allow read: if true;
+      allow create, update: if isValidBlockedSlot(incoming()) && isValidId(slotId);
+      allow delete: if isValidId(slotId);
+    }
+
+    // Services collection rules
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create, update: if isValidService(incoming()) && isValidId(serviceId);
+      allow delete: if isValidId(serviceId);
+    }
+
+    // Campaigns collection rules
+    match /campaigns/{campaignId} {
+      allow read: if true;
+      allow create, update: if isValidCampaign(incoming()) && isValidId(campaignId);
+      allow delete: if isValidId(campaignId);
+    }
+
+    // Validation Blueprints
+    function isValidBooking(data) {
+      return data.keys().hasAll(['id', 'serviceId', 'clientName', 'clientPhone', 'clientEmail', 'date', 'time', 'status', 'createdAt'])
+        && data.keys().size() <= 10
+        && data.id is string && data.id.size() <= 128
+        && data.serviceId is string && data.serviceId.size() <= 128
+        && data.clientName is string && data.clientName.size() <= 100
+        && data.clientPhone is string && data.clientPhone.size() <= 30
+        && data.clientEmail is string && data.clientEmail.size() <= 100
+        && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && data.time is string && data.time.matches('^\\d{2}:\\d{2}$')
+        && data.status is string && (data.status == 'pendente' || data.status == 'confirmado' || data.status == 'concluido' || data.status == 'cancelado')
+        && data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    function isValidBlockedSlot(data) {
+      return data.keys().hasAll(['date'])
+        && (data.keys().size() == 1 || (data.keys().size() == 2 && data.keys().hasAll(['time'])))
+        && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && (!data.keys().hasAll(['time']) || data.time is string);
+    }
+
+    function isValidService(data) {
+      return data.keys().hasAll(['id', 'name', 'description', 'category', 'price', 'duration'])
+        && data.keys().size() <= 7
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 100
+        && data.description is string && data.description.size() <= 1000
+        && data.category is string && (data.category == 'facial' || data.category == 'corporal' || data.category == 'olhar' || data.category == 'depilacao' || data.category == 'cursos')
+        && (data.price is number || data.price is int)
+        && (data.duration is number || data.duration is int)
+        && (!data.keys().hasAll(['popular']) || data.popular is bool);
+    }
+
+    function isValidCampaign(data) {
+      return data.keys().hasAll(['id', 'serviceId', 'dates'])
+        && (data.keys().size() == 3 || (data.keys().size() == 4 && data.keys().hasAll(['notes'])))
+        && data.id is string && data.id.size() <= 128
+        && data.serviceId is string && data.serviceId.size() <= 128
+        && data.dates is list && data.dates.size() <= 30
+        && (!data.keys().hasAll(['notes']) || (data.notes is string && data.notes.size() <= 500));
+    }
+  }
+}

@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+
+  /* Sleek Interface design theme color scales */
+  --color-gold-50: #FDFBF9;  /* Crisp Ivory Background */
+  --color-gold-100: #F3EBE1; /* Elegant light border tone */
+  --color-gold-200: #E7DBCB; /* Soft tan accent hover */
+  --color-gold-300: #D8C3A5; /* Muted gold-beige */
+  --color-gold-400: #D4B275; /* Soft transition gold */
+  --color-gold-500: #C5A059; /* Sleek Brand Gold */
+  --color-gold-600: #B28E4B; /* Deep rich Gold accent */
+  --color-gold-700: #93743B; /* Vintage warm gold */
+  --color-gold-800: #4A4A4A; /* Charcoal dark gray text */
+  --color-gold-900: #3A3A3A; /* Elegant primary dark slate */
+  --color-gold-950: #2D2D2D; /* Jet sleek dark charcoal */
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FDFBF9; /* Crisp Ivory background from Sleek theme */
+  color: #2D2D2D; /* Elegant dark charcoal from Sleek theme */
+}
+
+/* Elegant micro-transitions and spin animations */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 24s linear infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+
