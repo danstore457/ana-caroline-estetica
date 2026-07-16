@@ -399,9 +399,9 @@ export default function BookingModal({
                     </div>
 
                     {/* Weekdays header */}
-                    <div className="grid grid-cols-7 gap-1 text-center">
+                    <div className="grid grid-cols-7 gap-1 text-center select-none" translate="no">
                       {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
-                        <span key={d} className="text-[9px] font-sans font-bold text-gold-500 uppercase tracking-widest">
+                        <span key={d} className="text-[9px] font-sans font-bold text-gold-500 uppercase tracking-widest notranslate" translate="no">
                           {d}
                         </span>
                       ))}
