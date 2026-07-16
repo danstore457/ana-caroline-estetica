@@ -94,7 +94,7 @@ export default function BookingModal({
     return isSpecificBlocked || isAlreadyBooked;
   };
 
-  // Generate the next 14 available days for booking (excluding Sundays and fully blocked days)
+  // Generate the next 365 available days for booking (releasing all days, including Sundays, up to 1 year in the future)
   const getAvailableDates = () => {
     if (activeCampaign) {
       // Campaigns have predefined dates
@@ -108,13 +108,10 @@ export default function BookingModal({
     const list = [];
     const today = new Date();
     
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 0; i <= 365; i++) {
       const nextDate = new Date();
       nextDate.setDate(today.getDate() + i);
       
-      const dayOfWeek = nextDate.getDay(); // 0 = Sunday, 6 = Saturday
-      if (dayOfWeek === 0) continue; // Skip Sundays
-
       const year = nextDate.getFullYear();
       const month = String(nextDate.getMonth() + 1).padStart(2, '0');
       const day = String(nextDate.getDate()).padStart(2, '0');
