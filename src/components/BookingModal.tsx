@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Service, Booking, BlockedSlot, Campaign, AVAILABLE_HOURS } from '../types';
-import { X, Calendar, Clock, User, Phone, AlignLeft, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, Clock, User, Phone, AlignLeft, Sparkles, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -35,6 +35,23 @@ export default function BookingModal({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+
+  const parseDateSafe = (dateStr: string) => {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date();
+  };
+
+  const getMonthName = (monthIndex: number) => {
+    const months = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return months[monthIndex];
+  };
 
   // Initialize form fields when modal opens
   useEffect(() => {
@@ -52,6 +69,9 @@ export default function BookingModal({
       // Set date and time
       setSelectedDate(initialDate || '');
       setSelectedTime(initialTime || '');
+
+      const baseDate = initialDate ? parseDateSafe(initialDate) : new Date();
+      setViewDate(baseDate);
     }
   }, [isOpen, initialServiceId, initialDate, initialTime, services]);
 
@@ -171,6 +191,58 @@ export default function BookingModal({
 
   const availableDates = getAvailableDates();
   const availableTimes = getAvailableTimes();
+
+  // Create a set for quick available date lookups
+  const availableDatesSet = new Set(availableDates.map(d => d.value));
+
+  // Determine current calendar view variables
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  // First day of view month (0 = Sunday, 1 = Monday, etc.)
+  const firstDayIndex = new Date(year, month, 1).getDay();
+  // Total days in view month
+  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Build calendar cells
+  const calendarDays: Array<{ day: number; dateStr: string } | null> = [];
+  
+  // Empty padding cells for preceding month
+  for (let i = 0; i < firstDayIndex; i++) {
+    calendarDays.push(null);
+  }
+
+  // Real days of the month
+  for (let day = 1; day <= totalDaysInMonth; day++) {
+    const monthStr = String(month + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const dateStr = `${year}-${monthStr}-${dayStr}`;
+    calendarDays.push({
+      day,
+      dateStr,
+    });
+  }
+
+  // Check navigation range
+  const todayDateObj = new Date();
+  const minMonthDate = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), 1);
+
+  const maxAvailableDate = availableDates.reduce((max, curr) => {
+    const currDate = parseDateSafe(curr.value);
+    return currDate > max ? currDate : max;
+  }, todayDateObj);
+  const maxMonthDate = new Date(maxAvailableDate.getFullYear(), maxAvailableDate.getMonth(), 1);
+
+  const canGoPrev = new Date(year, month, 1) > minMonthDate;
+  const canGoNext = new Date(year, month, 1) < maxMonthDate;
+
+  const handlePrevMonth = () => {
+    setViewDate(new Date(year, month - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(year, month + 1, 1));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -298,27 +370,78 @@ export default function BookingModal({
                   {activeCampaign ? '1. Escolha um Dia da Agenda Especial *' : '1. Escolha o Dia do Atendimento *'}
                 </label>
                 {availableDates.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1 border border-gold-100/50 rounded-xl bg-gold-50/20">
-                    {availableDates.map((dateObj) => {
-                      const isSelected = selectedDate === dateObj.value;
-                      return (
-                        <button
-                          key={dateObj.value}
-                          type="button"
-                          onClick={() => {
-                            setSelectedDate(dateObj.value);
-                            setSelectedTime(''); // Reset time on date change
-                          }}
-                          className={`text-[10px] font-sans font-semibold px-3 py-2 rounded-lg transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-gold-900 text-white shadow-xs'
-                              : 'bg-white border border-gold-100 text-gold-800 hover:bg-gold-50'
-                          }`}
-                        >
-                          {dateObj.label}
-                        </button>
-                      );
-                    })}
+                  <div className="border border-gold-100 rounded-2xl p-4 bg-white/50 shadow-xs space-y-4">
+                    {/* Month Header */}
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        disabled={!canGoPrev}
+                        onClick={handlePrevMonth}
+                        className={`p-1.5 rounded-full border border-gold-100 text-gold-900 transition-all ${
+                          !canGoPrev ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gold-50 cursor-pointer'
+                        }`}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="font-serif text-xs font-medium text-gold-950 uppercase tracking-wider">
+                        {getMonthName(month)} {year}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!canGoNext}
+                        onClick={handleNextMonth}
+                        className={`p-1.5 rounded-full border border-gold-100 text-gold-900 transition-all ${
+                          !canGoNext ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gold-50 cursor-pointer'
+                        }`}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Weekdays header */}
+                    <div className="grid grid-cols-7 gap-1 text-center">
+                      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
+                        <span key={d} className="text-[9px] font-sans font-bold text-gold-500 uppercase tracking-widest">
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Days Grid */}
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {calendarDays.map((dayObj, index) => {
+                        if (dayObj === null) {
+                          return <div key={`empty-${index}`} className="aspect-square" />;
+                        }
+
+                        const isAvailable = availableDatesSet.has(dayObj.dateStr);
+                        const isSelected = selectedDate === dayObj.dateStr;
+
+                        return (
+                          <button
+                            key={dayObj.dateStr}
+                            type="button"
+                            disabled={!isAvailable}
+                            onClick={() => {
+                              setSelectedDate(dayObj.dateStr);
+                              setSelectedTime(''); // Reset time on date change
+                            }}
+                            className={`aspect-square flex flex-col items-center justify-center text-xs rounded-full transition-all relative ${
+                              isAvailable
+                                ? isSelected
+                                  ? 'bg-gold-900 text-white font-bold shadow-md cursor-pointer scale-105 border border-gold-900'
+                                  : 'bg-gold-50/50 border border-gold-100/50 text-gold-950 font-medium hover:bg-gold-100 cursor-pointer'
+                                : 'text-neutral-300 font-light cursor-not-allowed hover:bg-neutral-50/10'
+                            }`}
+                          >
+                            <span>{dayObj.day}</span>
+                            {isAvailable && !isSelected && (
+                              <span className="absolute bottom-1 w-1 h-1 bg-gold-400 rounded-full" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-[10px] text-red-500 font-light">Nenhum dia disponível nos próximos dias. Por favor, fale conosco no WhatsApp.</p>
