@@ -355,7 +355,7 @@ export default function BookingModal({
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} - R$ {s.price.toFixed(2).replace('.', ',')} ({s.duration} min)
+                      {s.name} {s.isPackage ? `[Pacote ${s.sessionsCount} sessões]` : ''} - R$ {s.price.toFixed(2).replace('.', ',')} ({s.duration} min)
                     </option>
                   ))}
                 </select>

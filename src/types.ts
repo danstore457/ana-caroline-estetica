@@ -8,6 +8,8 @@ export interface Service {
   price: number;
   duration: number; // in minutes
   popular?: boolean;
+  isPackage?: boolean;
+  sessionsCount?: number;
 }
 
 export interface Booking {
@@ -123,30 +125,48 @@ export const SERVICES: Service[] = [
     price: 120,
     duration: 60,
     popular: true,
+    isPackage: true,
+    sessionsCount: 8,
   },
   {
     id: 'ventosa-terapia',
     name: 'Ventosaterapia Terapêutica',
     description: 'Aplicação de ventosas de sucção para liberação miofascial profunda, melhora do fluxo sanguíneo, alívio de dores nas costas e liberação de toxinas acumuladas.',
     category: 'corporal',
-    price: 110,
+    price: 120,
     duration: 50,
+    isPackage: true,
+    sessionsCount: 8,
   },
   {
     id: 'drenagem-linfatica',
     name: 'Drenagem Linfática Corporal',
     description: 'Técnica manual suave para estimular o sistema linfático, reduzir a retenção de líquidos, desinchar o corpo e auxiliar na eliminação de toxinas do organismo.',
     category: 'corporal',
-    price: 110,
+    price: 480,
     duration: 60,
+    isPackage: true,
+    sessionsCount: 8,
   },
   {
     id: 'massagem-modeladora',
     name: 'Massagem Modeladora Ativa',
     description: 'Movimentos firmes, rápidos e vigorosos para ativar a circulação, auxiliar na modelagem do contorno corporal e combater a celulite e gordura localizada.',
     category: 'corporal',
-    price: 130,
+    price: 600,
     duration: 50,
+    isPackage: true,
+    sessionsCount: 8,
+  },
+  {
+    id: 'massagem-dreno-modeladora',
+    name: 'Massagem Dreno Modeladora',
+    description: 'Protocolo exclusivo combinando drenagem linfática e manobras modeladoras intensas para desintoxicação corporal, melhora da silhueta e redução de retenção hídrica.',
+    category: 'corporal',
+    price: 800,
+    duration: 60,
+    isPackage: true,
+    sessionsCount: 8,
   },
   {
     id: 'lash-lifting',

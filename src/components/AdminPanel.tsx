@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { CATEGORIES, AVAILABLE_HOURS, Booking, BlockedSlot, Service, ServiceCategory, Campaign } from '../types';
 import {
   Calendar, CheckCircle, AlertCircle, XCircle, Trash2, TrendingUp, DollarSign,
-  User, Sparkles, ShieldAlert, Key, ClipboardList, Ban, Plus, Clock, ExternalLink, RefreshCw, Edit
+  User, Sparkles, ShieldAlert, Key, ClipboardList, Ban, Plus, Clock, ExternalLink, RefreshCw, Edit,
+  ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, MapPin
 } from 'lucide-react';
+import { getEmbedUrl } from '../utils/map';
 
 interface AdminPanelProps {
   bookings: Booking[];
@@ -21,7 +23,52 @@ interface AdminPanelProps {
   onDeleteCampaign?: (campaignId: string) => void;
   onClearAllBookings?: () => void;
   onClearAllServices?: () => void;
+  ownerPhoto?: string;
+  onUpdateOwnerPhoto?: (photoUrl: string, scale?: number, posX?: number, posY?: number) => void;
+  photoScale?: number;
+  photoX?: number;
+  photoY?: number;
+  address?: string;
+  mapUrl?: string;
+  onUpdateLocation?: (address: string, mapUrl: string) => void;
 }
+
+const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 800): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      } else {
+        resolve(base64Str);
+      }
+    };
+    img.onerror = () => {
+      resolve(base64Str);
+    };
+  });
+};
 
 export default function AdminPanel({
   bookings,
@@ -39,7 +86,38 @@ export default function AdminPanel({
   onDeleteCampaign = () => {},
   onClearAllBookings = () => {},
   onClearAllServices = () => {},
+  ownerPhoto = '',
+  onUpdateOwnerPhoto = () => {},
+  photoScale = 1,
+  photoX = 0,
+  photoY = 0,
+  address = 'Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO',
+  mapUrl = 'https://www.google.com/maps/place/16%C2%B004\'36.2%22S+48%C2%B003\'49.1%22W/@-16.0787166,-48.073028,15.25z/data=!4m4!3m3!8m2!3d-16.0767072!4d-48.0636244?hl=pt-BR&entry=ttu&g_ep=EgoyMDI2MDcxNS4wIKXMDSoASAFQAw%3D%3D',
+  onUpdateLocation = () => {},
 }: AdminPanelProps) {
+  // Owner photo local adjustment states
+  const [localScale, setLocalScale] = useState(photoScale);
+  const [localX, setLocalX] = useState(photoX);
+  const [localY, setLocalY] = useState(photoY);
+
+  // Location and address local states
+  const [localAddress, setLocalAddress] = useState(address);
+  const [localMapUrl, setLocalMapUrl] = useState(mapUrl);
+  const [isLocationSaving, setIsLocationSaving] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState('');
+  const [locationError, setLocationError] = useState('');
+
+  useEffect(() => {
+    setLocalScale(photoScale);
+    setLocalX(photoX);
+    setLocalY(photoY);
+  }, [photoScale, photoX, photoY]);
+
+  useEffect(() => {
+    setLocalAddress(address);
+    setLocalMapUrl(mapUrl);
+  }, [address, mapUrl]);
+
   // Authentication with robust password (removed one-click demo option)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -81,6 +159,8 @@ export default function AdminPanel({
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newServiceDuration, setNewServiceDuration] = useState('');
   const [newServicePopular, setNewServicePopular] = useState(false);
+  const [newServiceIsPackage, setNewServiceIsPackage] = useState(false);
+  const [newServiceSessionsCount, setNewServiceSessionsCount] = useState('');
   const [newServiceIsCampaign, setNewServiceIsCampaign] = useState(false);
   const [newServiceCampDates, setNewServiceCampDates] = useState<string[]>([]);
   const [newServiceCampDateInput, setNewServiceCampDateInput] = useState('');
@@ -128,6 +208,8 @@ export default function AdminPanel({
     setNewServicePrice(s.price.toString());
     setNewServiceDuration(s.duration.toString());
     setNewServicePopular(s.popular || false);
+    setNewServiceIsPackage(s.isPackage || false);
+    setNewServiceSessionsCount(s.sessionsCount ? s.sessionsCount.toString() : '');
 
     const camp = campaigns.find((c) => c.serviceId === s.id);
     if (camp) {
@@ -155,6 +237,8 @@ export default function AdminPanel({
     setNewServicePrice('');
     setNewServiceDuration('');
     setNewServicePopular(false);
+    setNewServiceIsPackage(false);
+    setNewServiceSessionsCount('');
     setNewServiceIsCampaign(false);
     setNewServiceCampDates([]);
     setNewServiceCampDateInput('');
@@ -303,6 +387,16 @@ export default function AdminPanel({
       return;
     }
 
+    let sessionsCountNum: number | undefined = undefined;
+    if (newServiceIsPackage) {
+      const parsed = parseInt(newServiceSessionsCount);
+      if (isNaN(parsed) || parsed <= 0) {
+        setServiceError('Por favor, insira uma quantidade de sessões válida (maior que 0) para o pacote.');
+        return;
+      }
+      sessionsCountNum = parsed;
+    }
+
     const newService: Service = {
       id: cleanId,
       name: newServiceName.trim(),
@@ -311,6 +405,8 @@ export default function AdminPanel({
       price: priceNum,
       duration: durationNum,
       popular: newServicePopular,
+      isPackage: newServiceIsPackage,
+      sessionsCount: sessionsCountNum,
     };
 
     onAddService(newService);
@@ -345,6 +441,8 @@ export default function AdminPanel({
     setNewServicePrice('');
     setNewServiceDuration('');
     setNewServicePopular(false);
+    setNewServiceIsPackage(false);
+    setNewServiceSessionsCount('');
     setNewServiceIsCampaign(false);
     setNewServiceCampDates([]);
     setNewServiceCampDateInput('');
@@ -1057,6 +1155,308 @@ export default function AdminPanel({
               )}
             </div>
 
+            {/* Owner Photo Settings Card */}
+            <div className="bg-white border border-gold-100 rounded-3xl p-6 shadow-xs space-y-5 text-left">
+              <div className="space-y-1.5">
+                <h5 className="font-serif text-lg font-normal text-gold-950 flex items-center space-x-2">
+                  <User className="w-5 h-5 text-gold-500" />
+                  <span>Foto da Ana Caroline</span>
+                </h5>
+                <p className="text-xs text-gold-800/80 font-light leading-relaxed">
+                  Altere a foto que é exibida na seção "Sobre Nós" no site público e ajuste seu enquadramento.
+                </p>
+              </div>
+ 
+              {/* Photo Preview with active transformations */}
+              <div className="flex flex-col items-center justify-center py-4 bg-gold-50/30 rounded-2xl border border-gold-100/50 space-y-3">
+                <div className="w-32 h-40 rounded-2xl bg-linear-to-tr from-gold-100 to-gold-200/40 flex items-center justify-center overflow-hidden border-2 border-gold-200 shadow-xs">
+                  {ownerPhoto ? (
+                    <img
+                      src={ownerPhoto}
+                      alt="Preview"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover origin-center"
+                      style={{
+                        objectPosition: `${50 + localX}% ${50 + localY}%`,
+                        transform: `scale(${localScale})`
+                      }}
+                    />
+                  ) : (
+                    <span className="text-gold-500 font-serif text-3xl font-light italic select-none">AC</span>
+                  )}
+                </div>
+                <span className="text-[10px] text-gold-600 font-sans">
+                  {ownerPhoto ? 'Foto personalizada ativa' : 'Utilizando letras iniciais fallback'}
+                </span>
+              </div>
+
+              {/* Photo Framing Adjustment Sliders */}
+              {ownerPhoto && (
+                <div className="bg-gold-50/20 border border-gold-100/60 rounded-2xl p-4 space-y-4">
+                  <div className="flex justify-between items-center border-b border-gold-100/50 pb-2">
+                    <span className="text-xs font-semibold text-gold-950">Ajustar Enquadramento</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocalScale(1);
+                        setLocalX(0);
+                        setLocalY(0);
+                      }}
+                      className="text-[9px] uppercase tracking-widest font-bold text-gold-600 hover:text-gold-800 transition cursor-pointer"
+                    >
+                      Resetar
+                    </button>
+                  </div>
+
+                  {/* Quick Directional & Zoom Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-around gap-4 bg-gold-50/50 p-3 rounded-xl border border-gold-100">
+                    {/* Direction Pad */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] uppercase tracking-wider text-gold-600 font-bold mb-1.5">Posição (Setas)</span>
+                      <div className="grid grid-cols-3 gap-1 w-24 h-24">
+                        <div></div>
+                        <button
+                          type="button"
+                          onClick={() => setLocalY(prev => Math.max(-50, prev - 5))}
+                          className="flex items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 rounded-lg shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Mover para Cima"
+                        >
+                          <ChevronUp className="w-5 h-5" />
+                        </button>
+                        <div></div>
+
+                        <button
+                          type="button"
+                          onClick={() => setLocalX(prev => Math.max(-50, prev - 5))}
+                          className="flex items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 rounded-lg shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Mover para Esquerda"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <div className="flex items-center justify-center text-[10px] text-gold-400 font-bold bg-white/40 border border-dashed border-gold-100 rounded-lg">
+                          5%
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setLocalX(prev => Math.min(50, prev + 5))}
+                          className="flex items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 rounded-lg shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Mover para Direita"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+
+                        <div></div>
+                        <button
+                          type="button"
+                          onClick={() => setLocalY(prev => Math.min(50, prev + 5))}
+                          className="flex items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 rounded-lg shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Mover para Baixo"
+                        >
+                          <ChevronDown className="w-5 h-5" />
+                        </button>
+                        <div></div>
+                      </div>
+                    </div>
+
+                    {/* Zoom Quick Buttons */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] uppercase tracking-wider text-gold-600 font-bold mb-1.5">Zoom (Escala)</span>
+                      <div className="flex items-center gap-1.5 h-24">
+                        <button
+                          type="button"
+                          onClick={() => setLocalScale(prev => Math.max(0.2, parseFloat((prev - 0.1).toFixed(2))))}
+                          className="flex flex-col items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 w-11 h-11 rounded-xl shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Diminuir Zoom"
+                        >
+                          <ZoomOut className="w-4 h-4 text-gold-700" />
+                          <span className="text-[8px] font-bold mt-0.5">-10%</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLocalScale(prev => Math.min(3, parseFloat((prev + 0.1).toFixed(2))))}
+                          className="flex flex-col items-center justify-center bg-white hover:bg-gold-50 text-gold-800 border border-gold-200/80 w-11 h-11 rounded-xl shadow-2xs active:scale-95 transition cursor-pointer"
+                          title="Aumentar Zoom"
+                        >
+                          <ZoomIn className="w-4 h-4 text-gold-700" />
+                          <span className="text-[8px] font-bold mt-0.5">+10%</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save button with state feedback */}
+                  {(photoScale !== localScale || photoX !== localX || photoY !== localY) ? (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateOwnerPhoto(ownerPhoto, localScale, localX, localY)}
+                      className="w-full bg-gold-600 hover:bg-gold-700 text-white text-[10px] uppercase tracking-widest font-bold py-2.5 rounded-full transition cursor-pointer shadow-xs"
+                    >
+                      Salvar Enquadramento
+                    </button>
+                  ) : (
+                    <div className="text-center text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 py-2 rounded-xl font-medium">
+                      ✓ Enquadramento salvo!
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Upload controls */}
+              <div className="space-y-3 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">Carregar Nova Foto</label>
+                  <label className="w-full flex items-center justify-center space-x-2 bg-white hover:bg-gold-50 border border-gold-200 hover:border-gold-300 px-4 py-2.5 rounded-xl transition cursor-pointer text-xs font-semibold text-gold-900 shadow-2xs">
+                    <RefreshCw className="w-4 h-4 text-gold-500 animate-spin-slow" />
+                    <span>Selecionar do Aparelho</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert("A imagem selecionada é muito grande! Por favor, escolha um arquivo menor que 10MB.");
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = async () => {
+                            if (typeof reader.result === 'string') {
+                              try {
+                                const compressed = await compressImage(reader.result);
+                                onUpdateOwnerPhoto(compressed, 1, 0, 0);
+                              } catch (err) {
+                                console.error("Erro ao processar imagem:", err);
+                                onUpdateOwnerPhoto(reader.result, 1, 0, 0);
+                              }
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-[9px] text-gold-500 font-sans leading-relaxed">
+                    Escolha qualquer foto (formato quadrado ou retrato) de até 10MB. Ela será otimizada automaticamente para carregamento ultrarrápido!
+                  </p>
+                </div>
+
+                {ownerPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Deseja realmente remover sua foto personalizada e voltar para as letras iniciais "AC"?')) {
+                        onUpdateOwnerPhoto('', 1, 0, 0);
+                      }
+                    }}
+                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] uppercase tracking-widest font-bold py-2.5 rounded-full transition cursor-pointer"
+                  >
+                    Remover Foto Personalizada
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Endereço e Localização Card */}
+            <div className="bg-white border border-gold-100 rounded-3xl p-6 shadow-xs space-y-5 text-left">
+              <div className="space-y-1.5">
+                <h5 className="font-serif text-lg font-normal text-gold-950 flex items-center space-x-2">
+                  <MapPin className="w-5 h-5 text-gold-500" />
+                  <span>Endereço e Localização</span>
+                </h5>
+                <p className="text-xs text-gold-800/80 font-light leading-relaxed">
+                  Caso seu consultório mude de endereço ou você queira atualizar o mapa interativo do site, edite as informações abaixo.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Endereço Físico */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Endereço Escrito *</label>
+                  <textarea
+                    rows={2}
+                    value={localAddress}
+                    onChange={(e) => setLocalAddress(e.target.value)}
+                    placeholder="Ex: Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO"
+                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden resize-none font-sans"
+                    required
+                  />
+                </div>
+
+                {/* URL do Google Maps */}
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Link do Google Maps *</label>
+                  <input
+                    type="text"
+                    value={localMapUrl}
+                    onChange={(e) => setLocalMapUrl(e.target.value)}
+                    placeholder="Cole o link completo de compartilhamento do Google Maps"
+                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden font-sans"
+                    required
+                  />
+                  <p className="text-[9px] text-gold-500 font-sans leading-relaxed">
+                    Você pode copiar o link do navegador ou clicar em "Compartilhar" no Google Maps e copiar o link. O sistema gerará o mapa interativo automaticamente!
+                  </p>
+                </div>
+
+                {/* Live Preview of Map */}
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">Prévia do Mapa Interativo</span>
+                  <div className="w-full h-[150px] rounded-xl border border-gold-100 overflow-hidden relative shadow-inner bg-gold-50/20">
+                    <iframe
+                      src={getEmbedUrl(localMapUrl, localAddress)}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen={false}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Prévia do Mapa"
+                    />
+                  </div>
+                </div>
+
+                {/* Save Feedback and Buttons */}
+                {locationSuccess && (
+                  <p className="text-[11px] text-emerald-600 font-sans font-medium bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl text-center">
+                    {locationSuccess}
+                  </p>
+                )}
+                {locationError && (
+                  <p className="text-[11px] text-red-500 font-sans font-medium bg-red-50 border border-red-100 p-2.5 rounded-xl text-center">
+                    {locationError}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!localAddress.trim() || !localMapUrl.trim()) {
+                      setLocationError('Por favor, preencha todos os campos obrigatórios!');
+                      return;
+                    }
+                    setIsLocationSaving(true);
+                    setLocationError('');
+                    setLocationSuccess('');
+                    try {
+                      await onUpdateLocation(localAddress.trim(), localMapUrl.trim());
+                      setLocationSuccess('✓ Informações de endereço e mapa salvas com sucesso!');
+                      setTimeout(() => setLocationSuccess(''), 4000);
+                    } catch (err) {
+                      console.error(err);
+                      setLocationError('Erro ao salvar as configurações.');
+                    } finally {
+                      setIsLocationSaving(false);
+                    }
+                  }}
+                  disabled={isLocationSaving}
+                  className="w-full bg-gold-900 hover:bg-gold-950 text-white text-[10px] uppercase tracking-widest font-bold py-3 rounded-full transition cursor-pointer shadow-xs flex items-center justify-center space-x-2 disabled:opacity-55"
+                >
+                  <span>{isLocationSaving ? 'Salvando...' : 'Salvar Endereço e Mapa'}</span>
+                </button>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -1170,6 +1570,40 @@ export default function AdminPanel({
                   <label htmlFor="newServicePopular" className="text-xs text-gold-900 font-sans cursor-pointer select-none">
                     destacar como Popular
                   </label>
+                </div>
+
+                {/* Package Option */}
+                <div className="space-y-3 p-3 bg-gold-50/50 rounded-xl border border-gold-100/50 text-left">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="newServiceIsPackage"
+                      checked={newServiceIsPackage}
+                      onChange={(e) => {
+                        setNewServiceIsPackage(e.target.checked);
+                        if (!e.target.checked) setNewServiceSessionsCount('');
+                      }}
+                      className="rounded border-gold-100 text-gold-900 focus:ring-gold-500 h-4 w-4 cursor-pointer"
+                    />
+                    <label htmlFor="newServiceIsPackage" className="text-xs text-gold-900 font-sans font-semibold cursor-pointer select-none">
+                      Este serviço é um Pacote (múltiplas sessões)
+                    </label>
+                  </div>
+
+                  {newServiceIsPackage && (
+                    <div className="pl-6 space-y-1.5 animate-fade-in">
+                      <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Quantidade de Sessões no Pacote *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 8"
+                        value={newServiceSessionsCount}
+                        onChange={(e) => setNewServiceSessionsCount(e.target.value)}
+                        className="w-full max-w-xs bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2 text-xs focus:outline-hidden"
+                        required={newServiceIsPackage}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Campaign Highlight */}
@@ -1366,6 +1800,11 @@ export default function AdminPanel({
                         {s.popular && (
                           <span className="bg-amber-100 text-amber-800 text-[8px] font-sans font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
                             Estrela
+                          </span>
+                        )}
+                        {s.isPackage && (
+                          <span className="bg-purple-100 text-purple-800 text-[8px] font-sans font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                            Pacote ({s.sessionsCount} sessões)
                           </span>
                         )}
                         <span className="text-[9px] font-mono text-gold-400 font-light">ID: {s.id}</span>

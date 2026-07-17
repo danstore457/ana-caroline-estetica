@@ -8,7 +8,8 @@ import BookingModal from './components/BookingModal';
 import { Booking, BlockedSlot, INITIAL_BOOKINGS, Service, SERVICES, Campaign } from './types';
 import { Phone, MapPin, Clock, Instagram, Heart, Sparkles, AlertCircle } from 'lucide-react';
 import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, handleFirestoreError, OperationType } from './firebase';
+import { getEmbedUrl } from './utils/map';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -17,6 +18,113 @@ export default function App() {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [ownerPhoto, setOwnerPhoto] = useState<string>('');
+  const [photoScale, setPhotoScale] = useState<number>(1);
+  const [photoX, setPhotoX] = useState<number>(0);
+  const [photoY, setPhotoY] = useState<number>(0);
+
+  const [address, setAddress] = useState<string>('Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO');
+  const [mapUrl, setMapUrl] = useState<string>('https://www.google.com/maps/place/16%C2%B004\'36.2%22S+48%C2%B003\'49.1%22W/@-16.0787166,-48.073028,15.25z/data=!4m4!3m3!8m2!3d-16.0767072!4d-48.0636244?hl=pt-BR&entry=ttu&g_ep=EgoyMDI2MDcxNS4wIKXMDSoASAFQAw%3D%3D');
+
+  // Sync Owner Photo from Firestore settings
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'owner_profile'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.photoUrl !== undefined) {
+          setOwnerPhoto(data.photoUrl);
+        }
+        if (data.scale !== undefined) {
+          setPhotoScale(data.scale);
+        }
+        if (data.posX !== undefined) {
+          setPhotoX(data.posX);
+        }
+        if (data.posY !== undefined) {
+          setPhotoY(data.posY);
+        }
+      }
+    }, (error) => {
+      console.error("Error fetching settings from Firestore:", error);
+      const cached = localStorage.getItem('ana_carolina_owner_photo');
+      if (cached) setOwnerPhoto(cached);
+      const cachedScale = localStorage.getItem('ana_carolina_owner_photo_scale');
+      if (cachedScale) setPhotoScale(parseFloat(cachedScale));
+      const cachedX = localStorage.getItem('ana_carolina_owner_photo_x');
+      if (cachedX) setPhotoX(parseFloat(cachedX));
+      const cachedY = localStorage.getItem('ana_carolina_owner_photo_y');
+      if (cachedY) setPhotoY(parseFloat(cachedY));
+      handleFirestoreError(error, OperationType.GET, 'settings/owner_profile');
+    });
+
+    return () => unsub();
+  }, []);
+
+  // Sync Location Settings from Firestore settings
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'location'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.address !== undefined) {
+          setAddress(data.address);
+        }
+        if (data.mapUrl !== undefined) {
+          setMapUrl(data.mapUrl);
+        }
+      }
+    }, (error) => {
+      console.error("Error fetching location settings from Firestore:", error);
+      const cachedAddress = localStorage.getItem('ana_carolina_address');
+      if (cachedAddress) setAddress(cachedAddress);
+      const cachedMapUrl = localStorage.getItem('ana_carolina_map_url');
+      if (cachedMapUrl) setMapUrl(cachedMapUrl);
+      handleFirestoreError(error, OperationType.GET, 'settings/location');
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleUpdateOwnerPhoto = async (photoUrl: string, scale: number = 1, posX: number = 0, posY: number = 0) => {
+    try {
+      await setDoc(doc(db, 'settings', 'owner_profile'), { photoUrl, scale, posX, posY });
+      setOwnerPhoto(photoUrl);
+      setPhotoScale(scale);
+      setPhotoX(posX);
+      setPhotoY(posY);
+      localStorage.setItem('ana_carolina_owner_photo', photoUrl);
+      localStorage.setItem('ana_carolina_owner_photo_scale', String(scale));
+      localStorage.setItem('ana_carolina_owner_photo_x', String(posX));
+      localStorage.setItem('ana_carolina_owner_photo_y', String(posY));
+    } catch (e) {
+      console.error("Error saving owner photo:", e);
+      setOwnerPhoto(photoUrl);
+      setPhotoScale(scale);
+      setPhotoX(posX);
+      setPhotoY(posY);
+      localStorage.setItem('ana_carolina_owner_photo', photoUrl);
+      localStorage.setItem('ana_carolina_owner_photo_scale', String(scale));
+      localStorage.setItem('ana_carolina_owner_photo_x', String(posX));
+      localStorage.setItem('ana_carolina_owner_photo_y', String(posY));
+      handleFirestoreError(e, OperationType.WRITE, 'settings/owner_profile');
+    }
+  };
+
+  const handleUpdateLocation = async (newAddress: string, newMapUrl: string) => {
+    try {
+      await setDoc(doc(db, 'settings', 'location'), { address: newAddress, mapUrl: newMapUrl });
+      setAddress(newAddress);
+      setMapUrl(newMapUrl);
+      localStorage.setItem('ana_carolina_address', newAddress);
+      localStorage.setItem('ana_carolina_map_url', newMapUrl);
+    } catch (e) {
+      console.error("Error saving location settings:", e);
+      setAddress(newAddress);
+      setMapUrl(newMapUrl);
+      localStorage.setItem('ana_carolina_address', newAddress);
+      localStorage.setItem('ana_carolina_map_url', newMapUrl);
+      handleFirestoreError(e, OperationType.WRITE, 'settings/location');
+    }
+  };
 
   // Booking Modal State
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -76,6 +184,7 @@ export default function App() {
       } else {
         setBlockedSlots([]);
       }
+      handleFirestoreError(error, OperationType.LIST, 'blocked_slots');
     });
 
     return () => unsub();
@@ -101,6 +210,7 @@ export default function App() {
       } else {
         setServices(SERVICES);
       }
+      handleFirestoreError(error, OperationType.LIST, 'services');
     });
 
     return () => unsub();
@@ -127,6 +237,7 @@ export default function App() {
       } else {
         setBookings(INITIAL_BOOKINGS);
       }
+      handleFirestoreError(error, OperationType.LIST, 'bookings');
     });
 
     return () => unsub();
@@ -167,6 +278,7 @@ export default function App() {
       } else {
         setCampaigns([]);
       }
+      handleFirestoreError(error, OperationType.LIST, 'campaigns');
     });
 
     return () => unsub();
@@ -185,6 +297,7 @@ export default function App() {
     } catch (e) {
       console.error("Error adding booking to Firestore:", e);
       setBookings(prev => [newBooking, ...prev]);
+      handleFirestoreError(e, OperationType.WRITE, `bookings/${bookingId}`);
     }
   };
 
@@ -194,6 +307,7 @@ export default function App() {
     } catch (e) {
       console.error("Error updating booking status:", e);
       setBookings(prev => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+      handleFirestoreError(e, OperationType.UPDATE, `bookings/${id}`);
     }
   };
 
@@ -203,6 +317,7 @@ export default function App() {
     } catch (e) {
       console.error("Error deleting booking:", e);
       setBookings(prev => prev.filter((b) => b.id !== id));
+      handleFirestoreError(e, OperationType.DELETE, `bookings/${id}`);
     }
   };
 
@@ -215,6 +330,7 @@ export default function App() {
     } catch (e) {
       console.error("Error clearing all bookings:", e);
       setBookings([]);
+      handleFirestoreError(e, OperationType.DELETE, 'bookings');
     }
   };
 
@@ -226,6 +342,7 @@ export default function App() {
     } catch (e) {
       console.error("Error clearing all services:", e);
       setServices([]);
+      handleFirestoreError(e, OperationType.DELETE, 'services');
     }
   };
 
@@ -236,6 +353,7 @@ export default function App() {
     } catch (e) {
       console.error("Error adding blocked slot:", e);
       setBlockedSlots(prev => [...prev, slot]);
+      handleFirestoreError(e, OperationType.WRITE, `blocked_slots/${slotId}`);
     }
   };
 
@@ -246,6 +364,7 @@ export default function App() {
     } catch (e) {
       console.error("Error removing blocked slot:", e);
       setBlockedSlots(prev => prev.filter((s) => !(s.date === slot.date && s.time === slot.time)));
+      handleFirestoreError(e, OperationType.DELETE, `blocked_slots/${slotId}`);
     }
   };
 
@@ -255,6 +374,7 @@ export default function App() {
     } catch (e) {
       console.error("Error adding service:", e);
       setServices(prev => [...prev, newService]);
+      handleFirestoreError(e, OperationType.WRITE, `services/${newService.id}`);
     }
   };
 
@@ -264,6 +384,7 @@ export default function App() {
     } catch (e) {
       console.error("Error deleting service:", e);
       setServices(prev => prev.filter((s) => s.id !== serviceId));
+      handleFirestoreError(e, OperationType.DELETE, `services/${serviceId}`);
     }
   };
 
@@ -273,6 +394,7 @@ export default function App() {
     } catch (e) {
       console.error("Error adding campaign:", e);
       setCampaigns(prev => [...prev, campaign]);
+      handleFirestoreError(e, OperationType.WRITE, `campaigns/${campaign.id}`);
     }
   };
 
@@ -282,6 +404,7 @@ export default function App() {
     } catch (e) {
       console.error("Error deleting campaign:", e);
       setCampaigns(prev => prev.filter((c) => c.id !== campaignId));
+      handleFirestoreError(e, OperationType.DELETE, `campaigns/${campaignId}`);
     }
   };
 
@@ -312,7 +435,12 @@ export default function App() {
     };
     
     // Save to Firestore so it shows up in Ana's dashboard immediately
-    await setDoc(doc(db, 'bookings', bookingId), newBooking);
+    try {
+      await setDoc(doc(db, 'bookings', bookingId), newBooking);
+    } catch (e) {
+      console.error("Error saving public booking to Firestore:", e);
+      handleFirestoreError(e, OperationType.WRITE, `bookings/${bookingId}`);
+    }
 
     // Format highly polished WhatsApp text
     const service = services.find((s) => s.id === newBookingData.serviceId);
@@ -368,6 +496,14 @@ export default function App() {
             onDeleteCampaign={handleDeleteCampaign}
             onClearAllBookings={handleClearAllBookings}
             onClearAllServices={handleClearAllServices}
+            ownerPhoto={ownerPhoto}
+            onUpdateOwnerPhoto={handleUpdateOwnerPhoto}
+            photoScale={photoScale}
+            photoX={photoX}
+            photoY={photoY}
+            address={address}
+            mapUrl={mapUrl}
+            onUpdateLocation={handleUpdateLocation}
           />
         ) : (
           /* PUBLIC CLIENT-FACING VIEW */
@@ -421,7 +557,12 @@ export default function App() {
             />
 
             {/* About Us / History & Philosophy */}
-            <AboutUs />
+            <AboutUs 
+              ownerPhoto={ownerPhoto} 
+              photoScale={photoScale}
+              photoX={photoX}
+              photoY={photoY}
+            />
 
             {/* Google Maps / Contact Informative Section */}
             <section className="py-10 md:py-20 px-4 md:px-12 bg-white border-t border-gold-100">
@@ -437,7 +578,7 @@ export default function App() {
                   <div className="space-y-3.5 pt-1 md:pt-2 text-xs font-sans text-gold-800 font-light">
                     <p className="flex items-start space-x-3">
                       <MapPin className="w-4.5 h-4.5 text-gold-500 shrink-0 mt-0.5" />
-                      <span className="leading-relaxed">Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO</span>
+                      <span className="leading-relaxed">{address}</span>
                     </p>
                     <a 
                       href="https://api.whatsapp.com/send/?phone=5561993133493&text&type=phone_number&app_absent=0&utm_source=ig" 
@@ -455,20 +596,45 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Styled CSS Map Card / Aesthetic Placeholder */}
-                <div className="lg:col-span-7 h-[260px] md:h-[320px] w-full rounded-2xl md:rounded-3xl border border-gold-100 overflow-hidden relative shadow-md bg-[#FAF8F5] flex flex-col justify-between p-6 md:p-8">
-                  <div className="absolute inset-0 bg-linear-to-tr from-gold-100/10 to-gold-200/15" />
-                  
-                  <div className="relative z-10 flex justify-between items-start">
-                    <span className="bg-gold-900 text-gold-50 text-[10px] font-sans uppercase tracking-widest px-4 py-2 rounded-full font-bold">
-                      Ana Caroline Estética
-                    </span>
-                    <span className="bg-white/90 border border-gold-100 text-gold-900 text-[10px] font-sans px-4 py-2 rounded-full font-semibold">
-                      ★★★★★ (5.0 no Google)
-                    </span>
+                {/* Styled CSS Map Card with Live Embed Map */}
+                <div className="lg:col-span-7 h-[300px] md:h-[380px] w-full rounded-2xl md:rounded-3xl border border-gold-100 overflow-hidden relative shadow-md bg-[#FAF8F5] flex flex-col justify-between">
+                  {/* Google Map Iframe */}
+                  <div className="absolute inset-0 w-full h-full z-0">
+                    <iframe
+                      src={getEmbedUrl(mapUrl, address)}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen={false}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Localização do Consultório"
+                    />
                   </div>
+                  
+                  {/* Floating Overlays */}
+                  <div className="relative z-10 p-4 md:p-6 flex flex-col justify-between h-full pointer-events-none w-full">
+                    <div className="flex justify-between items-start w-full">
+                      <span className="bg-gold-900/90 backdrop-blur-xs text-gold-50 text-[9px] md:text-[10px] font-sans uppercase tracking-widest px-3.5 py-1.5 rounded-full font-bold shadow-sm pointer-events-auto">
+                        Ana Caroline Estética
+                      </span>
+                      <span className="bg-white/95 backdrop-blur-xs border border-gold-100 text-gold-900 text-[9px] md:text-[10px] font-sans px-3.5 py-1.5 rounded-full font-semibold shadow-sm pointer-events-auto">
+                        ★★★★★ (5.0 no Google)
+                      </span>
+                    </div>
 
-
+                    <div className="flex justify-end w-full">
+                      <a
+                        href={mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-white hover:bg-gold-50 text-gold-950 text-[10px] font-sans font-bold uppercase tracking-wider px-5 py-3 rounded-xl border border-gold-200/80 shadow-md hover:shadow-lg active:scale-98 transition pointer-events-auto flex items-center space-x-2"
+                      >
+                        <MapPin className="w-4 h-4 text-gold-600 animate-pulse" />
+                        <span>Como Chegar (Google Maps)</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

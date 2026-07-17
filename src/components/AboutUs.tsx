@@ -1,6 +1,13 @@
 import { ShieldCheck, Heart, Sparkles, Award, Users, Coffee } from 'lucide-react';
 
-export default function AboutUs() {
+interface AboutUsProps {
+  ownerPhoto?: string;
+  photoScale?: number;
+  photoX?: number;
+  photoY?: number;
+}
+
+export default function AboutUs({ ownerPhoto, photoScale = 1, photoX = 0, photoY = 0 }: AboutUsProps) {
   return (
     <section id="sobre-nos-section" className="py-12 md:py-24 px-4 md:px-12 bg-gold-50/40 border-t border-gold-100 scroll-mt-20">
       <div className="max-w-7xl mx-auto space-y-10 md:space-y-16">
@@ -23,20 +30,33 @@ export default function AboutUs() {
           
           {/* Founder Graphic/Avatar Placeholder (Premium CSS Design) */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-64 h-80 md:w-80 md:h-96 rounded-t-full border border-gold-200 bg-white p-4 shadow-md flex flex-col justify-end overflow-hidden">
-              <div className="absolute top-6 md:top-8 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full bg-linear-to-tr from-gold-100 to-gold-200/40 flex items-center justify-center">
-                {/* Simulated Silhouette elegant and professional */}
-                <div className="text-gold-500 font-serif text-7xl md:text-8xl select-none font-light italic">
-                  AC
-                </div>
+            <div className="relative w-64 h-80 md:w-80 md:h-96 rounded-3xl border border-gold-200 bg-white pt-2.5 pb-3.5 px-3 md:pt-3 md:pb-4.5 md:px-4 shadow-md flex flex-col overflow-hidden">
+              <div className="w-full h-58 md:h-74 rounded-2xl bg-linear-to-tr from-gold-100 to-gold-200/40 flex items-center justify-center overflow-hidden border border-gold-100">
+                {ownerPhoto ? (
+                  <img
+                    src={ownerPhoto}
+                    alt="Ana Caroline"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover origin-center"
+                    style={{
+                      objectPosition: `${50 + photoX}% ${50 + photoY}%`,
+                      transform: `scale(${photoScale})`
+                    }}
+                  />
+                ) : (
+                  /* Simulated Silhouette elegant and professional */
+                  <div className="text-gold-500 font-serif text-7xl md:text-8xl select-none font-light italic">
+                    AC
+                  </div>
+                )}
               </div>
               
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent pt-8 md:pt-12 pb-4 md:pb-6 px-4 md:px-6 text-center z-10">
-                <span className="font-serif text-xl md:text-2xl text-gold-950 font-normal block leading-tight">
+              <div className="flex-1 flex flex-col justify-center text-center pt-2 pb-1 px-2">
+                <span className="font-serif text-lg md:text-xl text-gold-950 font-normal block leading-tight">
                   Ana Caroline
                 </span>
                 <span className="text-[8px] md:text-[9px] font-sans tracking-[0.2em] text-gold-500 uppercase font-bold mt-1 block">
-                  Fundadora & Esteticista Integrativa
+                  Fundadora & Esteticista
                 </span>
               </div>
             </div>

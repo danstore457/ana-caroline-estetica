@@ -9,14 +9,22 @@ interface ServiceListProps {
 }
 
 export default function ServiceList({ onSelectService, services, campaigns = [] }: ServiceListProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'todos'>('todos');
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'todos' | 'pacotes'>('todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDates, setSelectedDates] = useState<Record<string, string>>({});
   const [selectedTimes, setSelectedTimes] = useState<Record<string, string>>({});
 
   // Filter logic
   const filteredServices = services.filter((service) => {
-    const matchesCategory = selectedCategory === 'todos' || service.category === selectedCategory;
+    let matchesCategory = false;
+    if (selectedCategory === 'todos') {
+      matchesCategory = true;
+    } else if (selectedCategory === 'pacotes') {
+      matchesCategory = service.isPackage === true;
+    } else {
+      matchesCategory = service.category === selectedCategory;
+    }
+
     const matchesSearch =
       service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -54,6 +62,19 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
             >
               Todos
             </button>
+
+            <button
+              onClick={() => setSelectedCategory('pacotes')}
+              id="cat-tab-pacotes"
+              className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest transition-all duration-300 cursor-pointer flex items-center space-x-1.5 ${
+                selectedCategory === 'pacotes'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-current" />
+              <span>Pacotes</span>
+            </button>
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
@@ -90,14 +111,25 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
               <div
                 key={service.id}
                 id={`service-card-${service.id}`}
-                className="group relative bg-white border border-gold-100 hover:border-gold-300 rounded-2xl md:rounded-3xl p-5 md:p-7 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300"
+                className={`group relative bg-white border rounded-2xl md:rounded-3xl p-5 md:p-7 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300 ${
+                  service.isPackage
+                    ? 'border-amber-200 bg-amber-50/20 hover:border-amber-400'
+                    : 'border-gold-100 hover:border-gold-300'
+                }`}
               >
-                {service.popular && (
-                  <span className="absolute top-5 right-5 inline-flex items-center space-x-1 bg-gold-500 text-white text-[8px] font-bold tracking-widest font-sans uppercase px-3 py-1 rounded-full shadow-xs">
-                    <Sparkles className="w-2.5 h-2.5" />
-                    <span>Popular</span>
-                  </span>
-                )}
+                <div className="flex flex-wrap gap-1 absolute top-5 right-5 z-10 justify-end">
+                  {service.popular && (
+                    <span className="inline-flex items-center space-x-1 bg-gold-500 text-white text-[8px] font-bold tracking-widest font-sans uppercase px-3 py-1 rounded-full shadow-xs">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      <span>Popular</span>
+                    </span>
+                  )}
+                  {service.isPackage && (
+                    <span className="inline-flex items-center bg-amber-600 text-white text-[8px] font-bold tracking-widest font-sans uppercase px-2.5 py-1 rounded-full shadow-xs">
+                      <span>PACOTE COM {service.sessionsCount} SESSÕES</span>
+                    </span>
+                  )}
+                </div>
 
                 <div className="space-y-4">
                   {/* Category Tag */}
@@ -192,13 +224,22 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
                   ))}
                 </div>
 
-                {/* Price, Duration & CTA Action */}
+                 {/* Price, Duration & CTA Action */}
                 <div className="mt-8 pt-5 border-t border-gold-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[9px] text-gold-500 font-bold tracking-wider uppercase block mb-1">Investimento</span>
-                    <span className="font-serif text-lg font-normal text-gold-900">
-                      R$ {service.price.toFixed(2).replace('.', ',')}
+                    <span className="text-[9px] text-gold-500 font-bold tracking-wider uppercase block mb-1">
+                      {service.isPackage ? 'Valor do Pacote' : 'Investimento'}
                     </span>
+                    <div className="space-y-0.5">
+                      <span className="font-serif text-lg font-normal text-gold-900 block leading-none">
+                        R$ {service.price.toFixed(2).replace('.', ',')}
+                      </span>
+                      {service.isPackage && service.sessionsCount && (
+                        <span className="text-[9.5px] text-amber-700 font-sans font-semibold block leading-tight">
+                          ({service.sessionsCount} sessões de R$ {(service.price / service.sessionsCount).toFixed(2).replace('.', ',')})
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-3">

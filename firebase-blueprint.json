@@ -54,6 +54,18 @@
         "notes": { "type": "string", "description": "Additional promotional notes", "maxLength": 500 }
       },
       "required": ["id", "serviceId", "dates"]
+    },
+    "setting": {
+      "title": "Setting",
+      "description": "Application settings and configurations",
+      "type": "object",
+      "properties": {
+        "photoUrl": { "type": "string", "description": "The custom profile photo as a base64 or URL string", "maxLength": 1000000 },
+        "scale": { "type": "number", "description": "The scale/zoom factor of the photo" },
+        "posX": { "type": "number", "description": "The horizontal shift of the photo" },
+        "posY": { "type": "number", "description": "The vertical shift of the photo" }
+      },
+      "required": ["photoUrl"]
     }
   },
   "firestore": {
@@ -72,6 +84,10 @@
     "/campaigns/{campaignId}": {
       "schema": "campaign",
       "description": "Active promotional events and campaigns"
+    },
+    "/settings/{settingId}": {
+      "schema": "setting",
+      "description": "General system settings, e.g., owner profile photo"
     }
   }
 }
