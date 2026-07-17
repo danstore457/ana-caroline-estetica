@@ -86,22 +86,25 @@ service cloud.firestore {
 
     function isValidService(data) {
       return data.keys().hasAll(['id', 'name', 'description', 'category', 'price', 'duration'])
-        && data.keys().size() <= 7
+        && data.keys().size() <= 9
         && data.id is string && data.id.size() <= 128
         && data.name is string && data.name.size() <= 100
         && data.description is string && data.description.size() <= 1000
         && data.category is string && (data.category == 'facial' || data.category == 'corporal' || data.category == 'olhar' || data.category == 'depilacao' || data.category == 'cursos')
         && (data.price is number || data.price is int)
         && (data.duration is number || data.duration is int)
-        && (!data.keys().hasAll(['popular']) || data.popular is bool);
+        && (!data.keys().hasAll(['popular']) || data.popular is bool)
+        && (!data.keys().hasAll(['isPackage']) || data.isPackage is bool)
+        && (!data.keys().hasAll(['sessionsCount']) || (data.sessionsCount is number || data.sessionsCount is int));
     }
 
     function isValidCampaign(data) {
       return data.keys().hasAll(['id', 'serviceId', 'dates'])
-        && (data.keys().size() == 3 || (data.keys().size() == 4 && data.keys().hasAll(['notes'])))
+        && data.keys().size() <= 5
         && data.id is string && data.id.size() <= 128
         && data.serviceId is string && data.serviceId.size() <= 128
         && data.dates is list && data.dates.size() <= 30
+        && (!data.keys().hasAll(['hours']) || (data.hours is list && data.hours.size() <= 30))
         && (!data.keys().hasAll(['notes']) || (data.notes is string && data.notes.size() <= 500));
     }
   }

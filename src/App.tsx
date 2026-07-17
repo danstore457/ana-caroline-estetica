@@ -444,7 +444,7 @@ export default function App() {
 
     // Format highly polished WhatsApp text
     const service = services.find((s) => s.id === newBookingData.serviceId);
-    let message = `Olá Dra. Ana Caroline, acabo de solicitar um agendamento pelo seu site!\n\n✨ *DADOS DO AGENDAMENTO* ✨\n\n👤 *Nome:* ${newBookingData.clientName}\n📞 *WhatsApp:* ${newBookingData.clientPhone}`;
+    let message = `Olá Ana Caroline, acabo de solicitar um agendamento pelo seu site!\n\n✨ *DADOS DO AGENDAMENTO* ✨\n\n👤 *Nome:* ${newBookingData.clientName}\n📞 *WhatsApp:* ${newBookingData.clientPhone}`;
     if (service) {
       message += `\n🌸 *Procedimento:* ${service.name}`;
     }
@@ -572,7 +572,7 @@ export default function App() {
                   <span className="text-[10px] font-sans tracking-[0.25em] text-gold-600 uppercase font-bold">Localização</span>
                   <h3 className="font-serif text-2xl md:text-3xl text-gold-950 font-light tracking-wide leading-tight">Nosso Espaço Exclusivo</h3>
                   <p className="text-xs md:text-sm font-sans text-gold-800/90 leading-relaxed font-light">
-                    Localizado em uma área nobre, tranquila e de fácil acesso, o consultório da Dra. Ana Caroline foi planejado detalhadamente para proporcionar uma experiência de acolhimento, luxo silencioso e relaxamento completo desde o primeiro instante de sua chegada.
+                    Localizado em uma área nobre, tranquila e de fácil acesso, o consultório de Ana Caroline foi planejado detalhadamente para proporcionar uma experiência de acolhimento, luxo silencioso e relaxamento completo desde o primeiro instante de sua chegada.
                   </p>
                   
                   <div className="space-y-3.5 pt-1 md:pt-2 text-xs font-sans text-gold-800 font-light">

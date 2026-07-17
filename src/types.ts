@@ -62,7 +62,7 @@ export const CATEGORIES: { id: ServiceCategory; label: string; description: stri
   {
     id: 'cursos',
     label: 'Cursos & Mentoria',
-    description: 'Capacitações profissionais exclusivas ministradas pela Dra. Ana Caroline para decolar sua carreira.',
+    description: 'Capacitações profissionais exclusivas ministradas por Ana Caroline para decolar sua carreira.',
   },
 ];
 
