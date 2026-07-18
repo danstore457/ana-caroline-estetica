@@ -171,13 +171,21 @@ export default function App() {
           loaded.push(doc.data() as BlockedSlot);
         }
       });
+      // Sort chronologically (earliest first)
+      loaded.sort((a, b) => {
+        return `${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`);
+      });
       setBlockedSlots(loaded);
     }, (error) => {
       console.error("Error fetching blocked slots from Firestore, falling back to local:", error);
       const storedBlocks = localStorage.getItem('ana_caroline_blocked_slots');
       if (storedBlocks) {
         try {
-          setBlockedSlots(JSON.parse(storedBlocks));
+          const parsed = JSON.parse(storedBlocks) as BlockedSlot[];
+          parsed.sort((a, b) => {
+            return `${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`);
+          });
+          setBlockedSlots(parsed);
         } catch {
           setBlockedSlots([]);
         }
@@ -376,11 +384,14 @@ export default function App() {
 
   const handleAddBlockedSlot = async (slot: BlockedSlot) => {
     const slotId = slot.date + (slot.time ? '_' + slot.time.replace(':', '-') : '');
+    const dataToSave: { date: string; time?: string } = { date: slot.date };
+    if (slot.time !== undefined && slot.time !== null) {
+      dataToSave.time = slot.time;
+    }
     try {
-      await setDoc(doc(db, 'blocked_slots', slotId), slot);
+      await setDoc(doc(db, 'blocked_slots', slotId), dataToSave);
     } catch (e) {
       console.error("Error adding blocked slot:", e);
-      setBlockedSlots(prev => [...prev, slot]);
       handleFirestoreError(e, OperationType.WRITE, `blocked_slots/${slotId}`);
     }
   };
@@ -391,7 +402,6 @@ export default function App() {
       await deleteDoc(doc(db, 'blocked_slots', slotId));
     } catch (e) {
       console.error("Error removing blocked slot:", e);
-      setBlockedSlots(prev => prev.filter((s) => !(s.date === slot.date && s.time === slot.time)));
       handleFirestoreError(e, OperationType.DELETE, `blocked_slots/${slotId}`);
     }
   };
@@ -425,19 +435,17 @@ export default function App() {
   };
 
   const handleAddCampaign = async (campaign: Campaign) => {
+    const dataToSave = { ...campaign };
+    if (dataToSave.hours === undefined) {
+      delete dataToSave.hours;
+    }
+    if (dataToSave.notes === undefined) {
+      delete dataToSave.notes;
+    }
     try {
-      await setDoc(doc(db, 'campaigns', campaign.id), campaign);
+      await setDoc(doc(db, 'campaigns', campaign.id), dataToSave);
     } catch (e) {
       console.error("Error adding campaign:", e);
-      setCampaigns(prev => {
-        const index = prev.findIndex((c) => c.id === campaign.id);
-        if (index > -1) {
-          const updated = [...prev];
-          updated[index] = campaign;
-          return updated;
-        }
-        return [...prev, campaign];
-      });
       handleFirestoreError(e, OperationType.WRITE, `campaigns/${campaign.id}`);
     }
   };

@@ -43,4 +43,26 @@ body {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
+/* Elegant, slim scrollbars for containers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 235, 225, 0.3); /* Transparent gold-100 fallback */
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E7DBCB; /* --color-gold-200 */
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A059; /* --color-gold-500 */
+}
+
+
 
