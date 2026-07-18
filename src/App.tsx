@@ -46,13 +46,13 @@ export default function App() {
       }
     }, (error) => {
       console.error("Error fetching settings from Firestore:", error);
-      const cached = localStorage.getItem('ana_carolina_owner_photo');
+      const cached = localStorage.getItem('ana_caroline_owner_photo');
       if (cached) setOwnerPhoto(cached);
-      const cachedScale = localStorage.getItem('ana_carolina_owner_photo_scale');
+      const cachedScale = localStorage.getItem('ana_caroline_owner_photo_scale');
       if (cachedScale) setPhotoScale(parseFloat(cachedScale));
-      const cachedX = localStorage.getItem('ana_carolina_owner_photo_x');
+      const cachedX = localStorage.getItem('ana_caroline_owner_photo_x');
       if (cachedX) setPhotoX(parseFloat(cachedX));
-      const cachedY = localStorage.getItem('ana_carolina_owner_photo_y');
+      const cachedY = localStorage.getItem('ana_caroline_owner_photo_y');
       if (cachedY) setPhotoY(parseFloat(cachedY));
       handleFirestoreError(error, OperationType.GET, 'settings/owner_profile');
     });
@@ -74,9 +74,9 @@ export default function App() {
       }
     }, (error) => {
       console.error("Error fetching location settings from Firestore:", error);
-      const cachedAddress = localStorage.getItem('ana_carolina_address');
+      const cachedAddress = localStorage.getItem('ana_caroline_address');
       if (cachedAddress) setAddress(cachedAddress);
-      const cachedMapUrl = localStorage.getItem('ana_carolina_map_url');
+      const cachedMapUrl = localStorage.getItem('ana_caroline_map_url');
       if (cachedMapUrl) setMapUrl(cachedMapUrl);
       handleFirestoreError(error, OperationType.GET, 'settings/location');
     });
@@ -91,20 +91,20 @@ export default function App() {
       setPhotoScale(scale);
       setPhotoX(posX);
       setPhotoY(posY);
-      localStorage.setItem('ana_carolina_owner_photo', photoUrl);
-      localStorage.setItem('ana_carolina_owner_photo_scale', String(scale));
-      localStorage.setItem('ana_carolina_owner_photo_x', String(posX));
-      localStorage.setItem('ana_carolina_owner_photo_y', String(posY));
+      localStorage.setItem('ana_caroline_owner_photo', photoUrl);
+      localStorage.setItem('ana_caroline_owner_photo_scale', String(scale));
+      localStorage.setItem('ana_caroline_owner_photo_x', String(posX));
+      localStorage.setItem('ana_caroline_owner_photo_y', String(posY));
     } catch (e) {
       console.error("Error saving owner photo:", e);
       setOwnerPhoto(photoUrl);
       setPhotoScale(scale);
       setPhotoX(posX);
       setPhotoY(posY);
-      localStorage.setItem('ana_carolina_owner_photo', photoUrl);
-      localStorage.setItem('ana_carolina_owner_photo_scale', String(scale));
-      localStorage.setItem('ana_carolina_owner_photo_x', String(posX));
-      localStorage.setItem('ana_carolina_owner_photo_y', String(posY));
+      localStorage.setItem('ana_caroline_owner_photo', photoUrl);
+      localStorage.setItem('ana_caroline_owner_photo_scale', String(scale));
+      localStorage.setItem('ana_caroline_owner_photo_x', String(posX));
+      localStorage.setItem('ana_caroline_owner_photo_y', String(posY));
       handleFirestoreError(e, OperationType.WRITE, 'settings/owner_profile');
     }
   };
@@ -114,14 +114,14 @@ export default function App() {
       await setDoc(doc(db, 'settings', 'location'), { address: newAddress, mapUrl: newMapUrl });
       setAddress(newAddress);
       setMapUrl(newMapUrl);
-      localStorage.setItem('ana_carolina_address', newAddress);
-      localStorage.setItem('ana_carolina_map_url', newMapUrl);
+      localStorage.setItem('ana_caroline_address', newAddress);
+      localStorage.setItem('ana_caroline_map_url', newMapUrl);
     } catch (e) {
       console.error("Error saving location settings:", e);
       setAddress(newAddress);
       setMapUrl(newMapUrl);
-      localStorage.setItem('ana_carolina_address', newAddress);
-      localStorage.setItem('ana_carolina_map_url', newMapUrl);
+      localStorage.setItem('ana_caroline_address', newAddress);
+      localStorage.setItem('ana_caroline_map_url', newMapUrl);
       handleFirestoreError(e, OperationType.WRITE, 'settings/location');
     }
   };
@@ -174,7 +174,7 @@ export default function App() {
       setBlockedSlots(loaded);
     }, (error) => {
       console.error("Error fetching blocked slots from Firestore, falling back to local:", error);
-      const storedBlocks = localStorage.getItem('ana_carolina_blocked_slots');
+      const storedBlocks = localStorage.getItem('ana_caroline_blocked_slots');
       if (storedBlocks) {
         try {
           setBlockedSlots(JSON.parse(storedBlocks));
@@ -200,7 +200,7 @@ export default function App() {
       setServices(loaded);
     }, (error) => {
       console.error("Error fetching services from Firestore, falling back to local state:", error);
-      const storedServices = localStorage.getItem('ana_carolina_services');
+      const storedServices = localStorage.getItem('ana_caroline_services');
       if (storedServices) {
         try {
           setServices(JSON.parse(storedServices));
@@ -227,7 +227,7 @@ export default function App() {
       setBookings(loaded);
     }, (error) => {
       console.error("Error fetching bookings from Firestore, falling back to local:", error);
-      const storedBookings = localStorage.getItem('ana_carolina_bookings');
+      const storedBookings = localStorage.getItem('ana_caroline_bookings');
       if (storedBookings) {
         try {
           setBookings(JSON.parse(storedBookings));
@@ -268,7 +268,7 @@ export default function App() {
       }
     }, (error) => {
       console.error("Error fetching campaigns from Firestore:", error);
-      const storedCampaigns = localStorage.getItem('ana_carolina_campaigns');
+      const storedCampaigns = localStorage.getItem('ana_caroline_campaigns');
       if (storedCampaigns) {
         try {
           setCampaigns(JSON.parse(storedCampaigns));
@@ -323,7 +323,7 @@ export default function App() {
 
   const handleClearAllBookings = async () => {
     try {
-      localStorage.setItem('ana_carolina_bookings_seeded', 'true');
+      localStorage.setItem('ana_caroline_bookings_seeded', 'true');
       const deletePromises = bookings.map((b) => deleteDoc(doc(db, 'bookings', b.id)));
       await Promise.all(deletePromises);
       setBookings([]);
@@ -373,7 +373,15 @@ export default function App() {
       await setDoc(doc(db, 'services', newService.id), newService);
     } catch (e) {
       console.error("Error adding service:", e);
-      setServices(prev => [...prev, newService]);
+      setServices(prev => {
+        const index = prev.findIndex((s) => s.id === newService.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = newService;
+          return updated;
+        }
+        return [...prev, newService];
+      });
       handleFirestoreError(e, OperationType.WRITE, `services/${newService.id}`);
     }
   };
@@ -393,7 +401,15 @@ export default function App() {
       await setDoc(doc(db, 'campaigns', campaign.id), campaign);
     } catch (e) {
       console.error("Error adding campaign:", e);
-      setCampaigns(prev => [...prev, campaign]);
+      setCampaigns(prev => {
+        const index = prev.findIndex((c) => c.id === campaign.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = campaign;
+          return updated;
+        }
+        return [...prev, campaign];
+      });
       handleFirestoreError(e, OperationType.WRITE, `campaigns/${campaign.id}`);
     }
   };

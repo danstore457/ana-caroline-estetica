@@ -406,8 +406,11 @@ export default function AdminPanel({
       duration: durationNum,
       popular: newServicePopular,
       isPackage: newServiceIsPackage,
-      sessionsCount: sessionsCountNum,
     };
+
+    if (newServiceIsPackage && sessionsCountNum !== undefined) {
+      newService.sessionsCount = sessionsCountNum;
+    }
 
     onAddService(newService);
 
@@ -540,7 +543,7 @@ export default function AdminPanel({
     const cleanPhone = phone.replace(/\D/g, '');
     const dateFormatted = new Date(date).toLocaleDateString('pt-BR');
     const msg = encodeURIComponent(
-      `Olá ${clientName}, aqui é a Ana Carolina! Estou entrando em contato para confirmar seu agendamento de ${serviceName} para o dia ${dateFormatted} às ${time}. Está tudo certo para você?`
+      `Olá ${clientName}, aqui é a Ana Caroline! Estou entrando em contato para confirmar seu agendamento de ${serviceName} para o dia ${dateFormatted} às ${time}. Está tudo certo para você?`
     );
     return `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${msg}`;
   };
@@ -559,7 +562,7 @@ export default function AdminPanel({
               Área Restrita
             </h4>
             <p className="text-xs font-sans text-gold-800 font-light leading-relaxed">
-              Este painel de controle é restrito para a profissional <strong className="font-semibold text-gold-900">Ana Carolina</strong> para gerenciar seus agendamentos.
+              Este painel de controle é restrito para a profissional <strong className="font-semibold text-gold-900">Ana Caroline</strong> para gerenciar seus agendamentos.
             </p>
           </div>
 
@@ -604,7 +607,7 @@ export default function AdminPanel({
             </span>
             <h3 className="font-serif text-3xl text-gold-950 font-light tracking-wide flex items-center space-x-2.5">
               <ClipboardList className="w-7 h-7 text-gold-500" />
-              <span>Olá, Ana Carolina!</span>
+              <span>Olá, Ana Caroline!</span>
             </h3>
             <p className="text-xs text-gold-800/80 font-sans font-light">
               Gerencie seus agendamentos online, controle seus bloqueios de horários e acompanhe seu faturamento.
@@ -1357,105 +1360,7 @@ export default function AdminPanel({
               </div>
             </div>
 
-            {/* Endereço e Localização Card */}
-            <div className="bg-white border border-gold-100 rounded-3xl p-6 shadow-xs space-y-5 text-left">
-              <div className="space-y-1.5">
-                <h5 className="font-serif text-lg font-normal text-gold-950 flex items-center space-x-2">
-                  <MapPin className="w-5 h-5 text-gold-500" />
-                  <span>Endereço e Localização</span>
-                </h5>
-                <p className="text-xs text-gold-800/80 font-light leading-relaxed">
-                  Caso seu consultório mude de endereço ou você queira atualizar o mapa interativo do site, edite as informações abaixo.
-                </p>
-              </div>
 
-              <div className="space-y-4">
-                {/* Endereço Físico */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Endereço Escrito *</label>
-                  <textarea
-                    rows={2}
-                    value={localAddress}
-                    onChange={(e) => setLocalAddress(e.target.value)}
-                    placeholder="Ex: Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO"
-                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden resize-none font-sans"
-                    required
-                  />
-                </div>
-
-                {/* URL do Google Maps */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Link do Google Maps *</label>
-                  <input
-                    type="text"
-                    value={localMapUrl}
-                    onChange={(e) => setLocalMapUrl(e.target.value)}
-                    placeholder="Cole o link completo de compartilhamento do Google Maps"
-                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden font-sans"
-                    required
-                  />
-                  <p className="text-[9px] text-gold-500 font-sans leading-relaxed">
-                    Você pode copiar o link do navegador ou clicar em "Compartilhar" no Google Maps e copiar o link. O sistema gerará o mapa interativo automaticamente!
-                  </p>
-                </div>
-
-                {/* Live Preview of Map */}
-                <div className="space-y-1.5">
-                  <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">Prévia do Mapa Interativo</span>
-                  <div className="w-full h-[150px] rounded-xl border border-gold-100 overflow-hidden relative shadow-inner bg-gold-50/20">
-                    <iframe
-                      src={getEmbedUrl(localMapUrl, localAddress)}
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
-                      allowFullScreen={false}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Prévia do Mapa"
-                    />
-                  </div>
-                </div>
-
-                {/* Save Feedback and Buttons */}
-                {locationSuccess && (
-                  <p className="text-[11px] text-emerald-600 font-sans font-medium bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl text-center">
-                    {locationSuccess}
-                  </p>
-                )}
-                {locationError && (
-                  <p className="text-[11px] text-red-500 font-sans font-medium bg-red-50 border border-red-100 p-2.5 rounded-xl text-center">
-                    {locationError}
-                  </p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!localAddress.trim() || !localMapUrl.trim()) {
-                      setLocationError('Por favor, preencha todos os campos obrigatórios!');
-                      return;
-                    }
-                    setIsLocationSaving(true);
-                    setLocationError('');
-                    setLocationSuccess('');
-                    try {
-                      await onUpdateLocation(localAddress.trim(), localMapUrl.trim());
-                      setLocationSuccess('✓ Informações de endereço e mapa salvas com sucesso!');
-                      setTimeout(() => setLocationSuccess(''), 4000);
-                    } catch (err) {
-                      console.error(err);
-                      setLocationError('Erro ao salvar as configurações.');
-                    } finally {
-                      setIsLocationSaving(false);
-                    }
-                  }}
-                  disabled={isLocationSaving}
-                  className="w-full bg-gold-900 hover:bg-gold-950 text-white text-[10px] uppercase tracking-widest font-bold py-3 rounded-full transition cursor-pointer shadow-xs flex items-center justify-center space-x-2 disabled:opacity-55"
-                >
-                  <span>{isLocationSaving ? 'Salvando...' : 'Salvar Endereço e Mapa'}</span>
-                </button>
-              </div>
-            </div>
 
           </div>
 
@@ -2038,6 +1943,109 @@ export default function AdminPanel({
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Manage Location Section */}
+        <div className="bg-white border border-gold-100 rounded-3xl p-6 md:p-8 shadow-xs space-y-6">
+          <div className="border-b border-gold-100 pb-5">
+            <h4 className="font-serif text-2xl text-gold-950 font-light tracking-wide flex items-center space-x-2.5">
+              <MapPin className="w-6 h-6 text-gold-500" />
+              <span>Endereço e Localização</span>
+            </h4>
+            <p className="text-xs text-gold-800 font-light mt-1">
+              Caso seu consultório mude de endereço ou você queira atualizar o mapa interativo do site, edite as informações abaixo.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+            {/* Inputs & Controls (Col-span 5) */}
+            <div className="lg:col-span-5 bg-gold-50/40 border border-gold-100 p-6 rounded-2xl space-y-4">
+              {/* Endereço Físico */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Endereço Escrito *</label>
+                <textarea
+                  rows={2}
+                  value={localAddress}
+                  onChange={(e) => setLocalAddress(e.target.value)}
+                  placeholder="Ex: Quadra 14, Lote 19 - Lunabel 3A, Novo Gama - GO"
+                  className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden resize-none font-sans"
+                  required
+                />
+              </div>
+
+              {/* URL do Google Maps */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Link do Google Maps *</label>
+                <input
+                  type="text"
+                  value={localMapUrl}
+                  onChange={(e) => setLocalMapUrl(e.target.value)}
+                  placeholder="Cole o link completo de compartilhamento do Google Maps"
+                  className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden font-sans"
+                  required
+                />
+                <p className="text-[9px] text-gold-500 font-sans leading-relaxed">
+                  Você pode copiar o link do navegador ou clicar em "Compartilhar" no Google Maps e copiar o link. O sistema gerará o mapa interativo automaticamente!
+                </p>
+              </div>
+
+              {/* Save Feedback and Buttons */}
+              {locationSuccess && (
+                <p className="text-[11px] text-emerald-600 font-sans font-medium bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl text-center">
+                  {locationSuccess}
+                </p>
+              )}
+              {locationError && (
+                <p className="text-[11px] text-red-500 font-sans font-medium bg-red-50 border border-red-100 p-2.5 rounded-xl text-center">
+                  {locationError}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!localAddress.trim() || !localMapUrl.trim()) {
+                    setLocationError('Por favor, preencha todos os campos obrigatórios!');
+                    return;
+                  }
+                  setIsLocationSaving(true);
+                  setLocationError('');
+                  setLocationSuccess('');
+                  try {
+                    await onUpdateLocation(localAddress.trim(), localMapUrl.trim());
+                    setLocationSuccess('✓ Informações de endereço e mapa salvas com sucesso!');
+                    setTimeout(() => setLocationSuccess(''), 4000);
+                  } catch (err) {
+                    console.error(err);
+                    setLocationError('Erro ao salvar as configurações.');
+                  } finally {
+                    setIsLocationSaving(false);
+                  }
+                }}
+                disabled={isLocationSaving}
+                className="w-full bg-gold-900 hover:bg-gold-950 text-white text-[10px] uppercase tracking-widest font-bold py-3 rounded-full transition cursor-pointer shadow-xs flex items-center justify-center space-x-2 disabled:opacity-55"
+              >
+                <span>{isLocationSaving ? 'Salvando...' : 'Salvar Endereço e Mapa'}</span>
+              </button>
+            </div>
+
+            {/* Live Preview of Map (Col-span 7) */}
+            <div className="lg:col-span-7 space-y-2">
+              <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">Prévia do Mapa Interativo</span>
+              <div className="w-full h-[320px] rounded-2xl border border-gold-100 overflow-hidden relative shadow-md bg-gold-50/20">
+                <iframe
+                  src={getEmbedUrl(localMapUrl, localAddress)}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen={false}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Prévia do Mapa"
+                />
+              </div>
             </div>
           </div>
         </div>

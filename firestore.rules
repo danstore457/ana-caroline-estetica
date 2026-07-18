@@ -79,9 +79,8 @@ service cloud.firestore {
 
     function isValidBlockedSlot(data) {
       return data.keys().hasAll(['date'])
-        && (data.keys().size() == 1 || (data.keys().size() == 2 && data.keys().hasAll(['time'])))
-        && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
-        && (!data.keys().hasAll(['time']) || data.time is string);
+        && data.date is string
+        && (!data.keys().hasAll(['time']) || data.time == null || data.time is string);
     }
 
     function isValidService(data) {

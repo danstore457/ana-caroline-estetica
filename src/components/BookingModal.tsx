@@ -82,27 +82,32 @@ export default function BookingModal({
 
   // Helper: check if a full day is blocked
   const isDayBlocked = (dateStr: string) => {
-    return blockedSlots.some(slot => slot.date === dateStr && !slot.time);
+    return blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
   };
 
   // Helper: check if a specific time is blocked
   const isTimeBlocked = (dateStr: string, timeStr: string) => {
-    const isSpecificBlocked = blockedSlots.some(slot => slot.date === dateStr && slot.time === timeStr);
-    const isAlreadyBooked = bookings.some(
-      b => b.date === dateStr && b.time === timeStr && b.status !== 'cancelado'
+    const isWholeDayBlocked = blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
+    const isSpecificBlocked = blockedSlots.some(
+      slot => slot.date?.trim() === dateStr.trim() && slot.time?.trim() === timeStr.trim()
     );
-    return isSpecificBlocked || isAlreadyBooked;
+    const isAlreadyBooked = bookings.some(
+      b => b.date?.trim() === dateStr.trim() && b.time?.trim() === timeStr.trim() && b.status !== 'cancelado'
+    );
+    return isWholeDayBlocked || isSpecificBlocked || isAlreadyBooked;
   };
 
   // Generate the next 365 available days for booking (releasing all days, including Sundays, up to 1 year in the future)
   const getAvailableDates = () => {
     if (activeCampaign) {
       // Campaigns have predefined dates
-      return activeCampaign.dates.map(d => ({
-        value: d,
-        label: formatLabelDate(d),
-        isCampaign: true,
-      }));
+      return activeCampaign.dates
+        .filter(d => !isDayBlocked(d))
+        .map(d => ({
+          value: d,
+          label: formatLabelDate(d),
+          isCampaign: true,
+        }));
     }
 
     const list = [];

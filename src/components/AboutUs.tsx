@@ -1,4 +1,3 @@
-import { ShieldCheck, Heart, Sparkles, Award, Users, Coffee } from 'lucide-react';
 
 interface AboutUsProps {
   ownerPhoto?: string;
@@ -99,97 +98,7 @@ export default function AboutUs({ ownerPhoto, photoScale = 1, photoX = 0, photoY
           </div>
         </div>
 
-        {/* Work Philosophy & Differentials - Bento Style */}
-        <div className="space-y-6 md:space-y-8">
-          <div className="border-b border-gold-100 pb-3 md:pb-4 text-left">
-            <h4 className="font-serif text-xl md:text-2xl text-gold-950 font-normal tracking-wide">
-              Nossos Pilares & Diferenciais
-            </h4>
-            <p className="text-[10px] md:text-xs text-gold-600 font-sans mt-0.5">Por que escolher o espaço Ana Caroline?</p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            
-            {/* Differential 1: Anamnese */}
-            <div className="bg-white border border-gold-100 p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-xs text-left space-y-3 md:space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <Heart className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Anamnese Individualizada</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Não trabalhamos com pacotes prontos ou genéricos. Antes de qualquer procedimento, realizamos uma avaliação profunda das suas necessidades, rotina e fisiologia para indicar o tratamento perfeito.
-                </p>
-              </div>
-            </div>
-
-            {/* Differential 2: Dermocosméticos Premium */}
-            <div className="bg-white border border-gold-100 p-6 rounded-3xl shadow-xs text-left space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <ShieldCheck className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Cosméticos de Padrão Ouro</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Utilizamos exclusivamente ativos dermocosméticos de marcas renomadas internacionalmente e regulamentadas, livres de parabenos e metais pesados, garantindo total segurança e alta eficácia.
-                </p>
-              </div>
-            </div>
-
-            {/* Differential 3: Tecnologia e Segurança */}
-            <div className="bg-white border border-gold-100 p-6 rounded-3xl shadow-xs text-left space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <Sparkles className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Tecnologia Certificada</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Nossos equipamentos modernos de alta tecnologia (como eletrocautério, vapor de ozônio e aparelhos de laser) passam por manutenções preventivas e calibragens rigorosas para que sua sessão seja perfeitamente segura.
-                </p>
-              </div>
-            </div>
-
-            {/* Differential 4: Estética do Olhar */}
-            <div className="bg-white border border-gold-100 p-6 rounded-3xl shadow-xs text-left space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <Award className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Especialistas do Olhar</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Nossa equipe de lash artists e designers de sobrancelhas dominam o visagismo facial, permitindo que a curvatura dos seus cílios e o desenho de sua sobrancelha harmonizem e realcem seus traços com luxo e delicadeza.
-                </p>
-              </div>
-            </div>
-
-            {/* Differential 5: Equipe Altamente Qualificada */}
-            <div className="bg-white border border-gold-100 p-6 rounded-3xl shadow-xs text-left space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <Users className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Equipe Multidisciplinar</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Nossas profissionais passam por treinamentos técnicos e humanizados mensais. Desde a recepção atenciosa até as terapeutas qualificadas, cada momento é focado no seu acolhimento e escuta ativa.
-                </p>
-              </div>
-            </div>
-
-            {/* Differential 6: Hospitalidade & Valet */}
-            <div className="bg-white border border-gold-100 p-6 rounded-3xl shadow-xs text-left space-y-4 hover:border-gold-300 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-gold-50 border border-gold-100 flex items-center justify-center text-gold-600">
-                <Coffee className="w-5 h-5 text-gold-500" />
-              </div>
-              <div className="space-y-1">
-                <h5 className="font-serif text-base text-gold-950 font-semibold">Hospitalidade & Valet Grátis</h5>
-                <p className="text-xs text-gold-800 font-light leading-relaxed">
-                  Oferecemos um delicioso cardápio de chás herbais e águas aromatizadas em cabines climatizadas com música suave. Além disso, contamos com serviço de manobrista gratuito para sua total conveniência e tranquilidade.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
 
       </div>
     </section>
