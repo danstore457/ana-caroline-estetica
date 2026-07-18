@@ -7,6 +7,20 @@ import {
 } from 'lucide-react';
 import { getEmbedUrl } from '../utils/map';
 
+const formatPhone = (val: string) => {
+  const digits = val.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) {
+    return digits.length > 0 ? `(${digits}` : '';
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 interface AdminPanelProps {
   bookings: Booking[];
   blockedSlots: BlockedSlot[];
@@ -668,6 +682,7 @@ export default function AdminPanel({
                 <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Nome da Cliente *</label>
                 <input
                   type="text"
+                  maxLength={60}
                   placeholder="Ex: Clara Mendes"
                   value={mClientName}
                   onChange={(e) => setMClientName(e.target.value)}
@@ -683,7 +698,7 @@ export default function AdminPanel({
                   type="text"
                   placeholder="Ex: (11) 98888-7777"
                   value={mClientPhone}
-                  onChange={(e) => setMClientPhone(e.target.value)}
+                  onChange={(e) => setMClientPhone(formatPhone(e.target.value))}
                   className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden"
                   required
                 />

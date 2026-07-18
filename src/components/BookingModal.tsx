@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Service, Booking, BlockedSlot, Campaign, AVAILABLE_HOURS } from '../types';
 import { X, Calendar, Clock, User, Phone, AlignLeft, Sparkles, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
+const formatPhone = (val: string) => {
+  const digits = val.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) {
+    return digits.length > 0 ? `(${digits}` : '';
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -322,6 +336,7 @@ export default function BookingModal({
                   <input
                     type="text"
                     required
+                    maxLength={60}
                     placeholder="Ex: Maria Oliveira"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
@@ -342,7 +357,7 @@ export default function BookingModal({
                     required
                     placeholder="Ex: (61) 99999-9999"
                     value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
+                    onChange={(e) => setClientPhone(formatPhone(e.target.value))}
                     className="w-full bg-gold-50/30 border border-gold-100 focus:border-gold-500 focus:outline-hidden rounded-xl py-2.5 pl-10 pr-4 text-xs text-gold-950"
                   />
                 </div>
