@@ -284,6 +284,31 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Sync state to localStorage for offline fallback robustness
+  useEffect(() => {
+    if (bookings.length > 0) {
+      localStorage.setItem('ana_caroline_bookings', JSON.stringify(bookings));
+    }
+  }, [bookings]);
+
+  useEffect(() => {
+    if (services.length > 0) {
+      localStorage.setItem('ana_caroline_services', JSON.stringify(services));
+    }
+  }, [services]);
+
+  useEffect(() => {
+    if (blockedSlots.length > 0) {
+      localStorage.setItem('ana_caroline_blocked_slots', JSON.stringify(blockedSlots));
+    }
+  }, [blockedSlots]);
+
+  useEffect(() => {
+    if (campaigns.length > 0) {
+      localStorage.setItem('ana_caroline_campaigns', JSON.stringify(campaigns));
+    }
+  }, [campaigns]);
+
   // State actions synced to Firestore
   const handleAddBooking = async (newBookingData: Omit<Booking, 'id' | 'createdAt'>) => {
     const bookingId = 'b-' + Math.random().toString(36).substr(2, 9);
@@ -324,9 +349,12 @@ export default function App() {
   const handleClearAllBookings = async () => {
     try {
       localStorage.setItem('ana_caroline_bookings_seeded', 'true');
-      const deletePromises = bookings.map((b) => deleteDoc(doc(db, 'bookings', b.id)));
-      await Promise.all(deletePromises);
+      localStorage.setItem('ana_caroline_bookings', JSON.stringify([]));
+      // Capture the bookings to delete before resetting the state immediately
+      const bookingsToDelete = [...bookings];
       setBookings([]);
+      const deletePromises = bookingsToDelete.map((b) => deleteDoc(doc(db, 'bookings', b.id)));
+      await Promise.all(deletePromises);
     } catch (e) {
       console.error("Error clearing all bookings:", e);
       setBookings([]);
