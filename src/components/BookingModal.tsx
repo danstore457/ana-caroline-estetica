@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Service, Booking, BlockedSlot, Campaign, AVAILABLE_HOURS } from '../types';
 import { X, Calendar, Clock, User, Phone, AlignLeft, Sparkles, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -95,12 +95,12 @@ export default function BookingModal({
   const activeCampaign = campaigns.find(c => c.serviceId === selectedServiceId);
 
   // Helper: check if a full day is blocked
-  const isDayBlocked = (dateStr: string) => {
+  const isDayBlocked = useCallback((dateStr: string) => {
     return blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
-  };
+  }, [blockedSlots]);
 
   // Helper: check if a specific time is blocked
-  const isTimeBlocked = (dateStr: string, timeStr: string) => {
+  const isTimeBlocked = useCallback((dateStr: string, timeStr: string) => {
     const isWholeDayBlocked = blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
     const isSpecificBlocked = blockedSlots.some(
       slot => slot.date?.trim() === dateStr.trim() && slot.time?.trim() === timeStr.trim()
@@ -109,10 +109,19 @@ export default function BookingModal({
       b => b.date?.trim() === dateStr.trim() && b.time?.trim() === timeStr.trim() && b.status !== 'cancelado'
     );
     return isWholeDayBlocked || isSpecificBlocked || isAlreadyBooked;
-  };
+  }, [blockedSlots, bookings]);
+
+  const formatLabelDate = useCallback((dateStr: string) => {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const weekday = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+    const dayAndMonth = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    return `${dayAndMonth} (${weekday})`;
+  }, []);
 
   // Generate the next 365 available days for booking (releasing all days, including Sundays, up to 1 year in the future)
-  const getAvailableDates = () => {
+  const availableDates = useMemo(() => {
     if (activeCampaign) {
       // Campaigns have predefined dates
       return activeCampaign.dates
@@ -145,19 +154,10 @@ export default function BookingModal({
       });
     }
     return list;
-  };
-
-  const formatLabelDate = (dateStr: string) => {
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    const weekday = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
-    const dayAndMonth = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    return `${dayAndMonth} (${weekday})`;
-  };
+  }, [activeCampaign, isDayBlocked, formatLabelDate]);
 
   // Get available times for selected date
-  const getAvailableTimes = () => {
+  const availableTimes = useMemo(() => {
     if (!selectedDate) return [];
     
     const times = activeCampaign?.hours && activeCampaign.hours.length > 0
@@ -168,7 +168,7 @@ export default function BookingModal({
       value: time,
       isBlocked: isTimeBlocked(selectedDate, time),
     }));
-  };
+  }, [selectedDate, activeCampaign, isTimeBlocked]);
 
   // If service changes and campaign status changes, reset date and time if they aren't compatible
   const handleServiceChange = (serviceId: string) => {
@@ -205,52 +205,66 @@ export default function BookingModal({
     }
   };
 
-  const availableDates = getAvailableDates();
-  const availableTimes = getAvailableTimes();
-
   // Create a set for quick available date lookups
-  const availableDatesSet = new Set(availableDates.map(d => d.value));
+  const availableDatesSet = useMemo(() => {
+    return new Set(availableDates.map(d => d.value));
+  }, [availableDates]);
 
   // Determine current calendar view variables
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
 
-  // First day of view month (0 = Sunday, 1 = Monday, etc.)
-  const firstDayIndex = new Date(year, month, 1).getDay();
-  // Total days in view month
-  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-
   // Build calendar cells
-  const calendarDays: Array<{ day: number; dateStr: string } | null> = [];
-  
-  // Empty padding cells for preceding month
-  for (let i = 0; i < firstDayIndex; i++) {
-    calendarDays.push(null);
-  }
+  const calendarDays = useMemo(() => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    const firstDayIndex = new Date(y, m, 1).getDay();
+    const totalDaysInMonth = new Date(y, m + 1, 0).getDate();
 
-  // Real days of the month
-  for (let day = 1; day <= totalDaysInMonth; day++) {
-    const monthStr = String(month + 1).padStart(2, '0');
-    const dayStr = String(day).padStart(2, '0');
-    const dateStr = `${year}-${monthStr}-${dayStr}`;
-    calendarDays.push({
-      day,
-      dateStr,
-    });
-  }
+    const days: Array<{ day: number; dateStr: string } | null> = [];
+    
+    // Empty padding cells for preceding month
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push(null);
+    }
+
+    // Real days of the month
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const monthStr = String(m + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const dateStr = `${y}-${monthStr}-${dayStr}`;
+      days.push({
+        day,
+        dateStr,
+      });
+    }
+    return days;
+  }, [viewDate]);
 
   // Check navigation range
   const todayDateObj = new Date();
-  const minMonthDate = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), 1);
+  const minMonthDate = useMemo(() => {
+    return new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), 1);
+  }, []);
 
-  const maxAvailableDate = availableDates.reduce((max, curr) => {
-    const currDate = parseDateSafe(curr.value);
-    return currDate > max ? currDate : max;
-  }, todayDateObj);
-  const maxMonthDate = new Date(maxAvailableDate.getFullYear(), maxAvailableDate.getMonth(), 1);
+  const maxAvailableDate = useMemo(() => {
+    return availableDates.reduce((max, curr) => {
+      const currDate = parseDateSafe(curr.value);
+      return currDate > max ? currDate : max;
+    }, todayDateObj);
+  }, [availableDates]);
 
-  const canGoPrev = new Date(year, month, 1) > minMonthDate;
-  const canGoNext = new Date(year, month, 1) < maxMonthDate;
+  const maxMonthDate = useMemo(() => {
+    return new Date(maxAvailableDate.getFullYear(), maxAvailableDate.getMonth(), 1);
+  }, [maxAvailableDate]);
+
+  const canGoPrev = useMemo(() => {
+    return new Date(year, month, 1) > minMonthDate;
+  }, [year, month, minMonthDate]);
+
+  const canGoNext = useMemo(() => {
+    return new Date(year, month, 1) < maxMonthDate;
+  }, [year, month, maxMonthDate]);
 
   const handlePrevMonth = () => {
     setViewDate(new Date(year, month - 1, 1));
