@@ -51,12 +51,20 @@ export default function BookingModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const [viewDate, setViewDate] = useState<Date>(new Date());
 
-  const parseDateSafe = (dateStr: string) => {
+  const parseDateSafe = (dateStr: any) => {
+    if (!dateStr || typeof dateStr !== 'string') {
+      if (dateStr instanceof Date && !isNaN(dateStr.getTime())) return dateStr;
+      return new Date();
+    }
     const parts = dateStr.split('-');
     if (parts.length === 3) {
-      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      if (!isNaN(d.getTime())) {
+        return d;
+      }
     }
-    return new Date();
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? new Date() : fallback;
   };
 
   const getMonthName = (monthIndex: number) => {
@@ -89,32 +97,39 @@ export default function BookingModal({
     }
   }, [isOpen, initialServiceId, initialDate, initialTime, services]);
 
-  if (!isOpen) return null;
 
   const activeService = services.find(s => s.id === selectedServiceId);
   const activeCampaign = campaigns.find(c => c.serviceId === selectedServiceId);
 
   // Helper: check if a full day is blocked
   const isDayBlocked = useCallback((dateStr: string) => {
-    return blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
+    if (!dateStr) return false;
+    return (blockedSlots || []).some(
+      slot => slot && slot.date && typeof slot.date === 'string' && slot.date.trim() === dateStr.trim() && !slot.time
+    );
   }, [blockedSlots]);
 
   // Helper: check if a specific time is blocked
   const isTimeBlocked = useCallback((dateStr: string, timeStr: string) => {
-    const isWholeDayBlocked = blockedSlots.some(slot => slot.date?.trim() === dateStr.trim() && !slot.time);
-    const isSpecificBlocked = blockedSlots.some(
-      slot => slot.date?.trim() === dateStr.trim() && slot.time?.trim() === timeStr.trim()
+    if (!dateStr || !timeStr) return false;
+    const isWholeDayBlocked = (blockedSlots || []).some(
+      slot => slot && slot.date && typeof slot.date === 'string' && slot.date.trim() === dateStr.trim() && !slot.time
     );
-    const isAlreadyBooked = bookings.some(
-      b => b.date?.trim() === dateStr.trim() && b.time?.trim() === timeStr.trim() && b.status !== 'cancelado'
+    const isSpecificBlocked = (blockedSlots || []).some(
+      slot => slot && slot.date && typeof slot.date === 'string' && slot.date.trim() === dateStr.trim() && slot.time && typeof slot.time === 'string' && slot.time.trim() === timeStr.trim()
+    );
+    const isAlreadyBooked = (bookings || []).some(
+      b => b && b.date && typeof b.date === 'string' && b.date.trim() === dateStr.trim() && b.time && typeof b.time === 'string' && b.time.trim() === timeStr.trim() && b.status !== 'cancelado'
     );
     return isWholeDayBlocked || isSpecificBlocked || isAlreadyBooked;
   }, [blockedSlots, bookings]);
 
-  const formatLabelDate = useCallback((dateStr: string) => {
+  const formatLabelDate = useCallback((dateStr: any) => {
+    if (!dateStr || typeof dateStr !== 'string') return '';
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    if (isNaN(d.getTime())) return dateStr;
     const weekday = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
     const dayAndMonth = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     return `${dayAndMonth} (${weekday})`;
@@ -122,10 +137,10 @@ export default function BookingModal({
 
   // Generate the next 365 available days for booking (releasing all days, including Sundays, up to 1 year in the future)
   const availableDates = useMemo(() => {
-    if (activeCampaign) {
+    if (activeCampaign && activeCampaign.dates) {
       // Campaigns have predefined dates
       return activeCampaign.dates
-        .filter(d => !isDayBlocked(d))
+        .filter(d => d && !isDayBlocked(d))
         .map(d => ({
           value: d,
           label: formatLabelDate(d),
@@ -243,28 +258,17 @@ export default function BookingModal({
 
   // Check navigation range
   const todayDateObj = new Date();
-  const minMonthDate = useMemo(() => {
-    return new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), 1);
-  }, []);
+  const minMonthDate = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), 1);
 
-  const maxAvailableDate = useMemo(() => {
-    return availableDates.reduce((max, curr) => {
-      const currDate = parseDateSafe(curr.value);
-      return currDate > max ? currDate : max;
-    }, todayDateObj);
-  }, [availableDates]);
+  const maxAvailableDate = availableDates.reduce((max, curr) => {
+    const currDate = parseDateSafe(curr.value);
+    return currDate > max ? currDate : max;
+  }, todayDateObj);
 
-  const maxMonthDate = useMemo(() => {
-    return new Date(maxAvailableDate.getFullYear(), maxAvailableDate.getMonth(), 1);
-  }, [maxAvailableDate]);
+  const maxMonthDate = new Date(maxAvailableDate.getFullYear(), maxAvailableDate.getMonth(), 1);
 
-  const canGoPrev = useMemo(() => {
-    return new Date(year, month, 1) > minMonthDate;
-  }, [year, month, minMonthDate]);
-
-  const canGoNext = useMemo(() => {
-    return new Date(year, month, 1) < maxMonthDate;
-  }, [year, month, maxMonthDate]);
+  const canGoPrev = new Date(year, month, 1) > minMonthDate;
+  const canGoNext = new Date(year, month, 1) < maxMonthDate;
 
   const handlePrevMonth = () => {
     setViewDate(new Date(year, month - 1, 1));
@@ -273,6 +277,8 @@ export default function BookingModal({
   const handleNextMonth = () => {
     setViewDate(new Date(year, month + 1, 1));
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto">

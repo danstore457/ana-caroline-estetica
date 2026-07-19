@@ -21,6 +21,34 @@ const formatPhone = (val: string) => {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 };
 
+const parseDateSafe = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    if (!isNaN(d.getTime())) {
+      return d;
+    }
+  }
+  const cleanStr = dateStr.replace('T00:00:00', '');
+  const parts2 = cleanStr.split('-');
+  if (parts2.length === 3) {
+    const d = new Date(parseInt(parts2[0]), parseInt(parts2[1]) - 1, parseInt(parts2[2]));
+    if (!isNaN(d.getTime())) {
+      return d;
+    }
+  }
+  const fallback = new Date(dateStr);
+  return isNaN(fallback.getTime()) ? new Date() : fallback;
+};
+
+const formatDateSafe = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = parseDateSafe(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('pt-BR');
+};
+
 interface AdminPanelProps {
   bookings: Booking[];
   blockedSlots: BlockedSlot[];
@@ -290,15 +318,21 @@ export default function AdminPanel({
   // Filtered Bookings list for table
   const filteredBookings = bookings
     .filter((b) => {
+      if (!b) return false;
       const matchesStatus = statusFilter === 'todos' || b.status === statusFilter;
       const matchesDate = !dateSearch || b.date === dateSearch;
       return matchesStatus && matchesDate;
     })
     .sort((a, b) => {
-      // Sort bookings: pending first, then by date, then by time
-      if (a.status === 'pendente' && b.status !== 'pendente') return -1;
-      if (a.status !== 'pendente' && b.status === 'pendente') return 1;
-      return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+      const statusA = a && typeof a.status === 'string' ? a.status : '';
+      const statusB = b && typeof b.status === 'string' ? b.status : '';
+      if (statusA === 'pendente' && statusB !== 'pendente') return -1;
+      if (statusA !== 'pendente' && statusB === 'pendente') return 1;
+      const dateA = a && typeof a.date === 'string' ? a.date : '';
+      const dateB = b && typeof b.date === 'string' ? b.date : '';
+      const timeA = a && typeof a.time === 'string' ? a.time : '';
+      const timeB = b && typeof b.time === 'string' ? b.time : '';
+      return `${dateA} ${timeA}`.localeCompare(`${dateB} ${timeB}`);
     });
 
   // Handle blocking off date/time
@@ -555,7 +589,7 @@ export default function AdminPanel({
   // Helper to open WhatsApp conversation
   const getWhatsAppLink = (phone: string, clientName: string, date: string, time: string, serviceName: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    const dateFormatted = new Date(date).toLocaleDateString('pt-BR');
+    const dateFormatted = formatDateSafe(date);
     const msg = encodeURIComponent(
       `Olá ${clientName}, aqui é a Ana Caroline! Estou entrando em contato para confirmar seu agendamento de ${serviceName} para o dia ${dateFormatted} às ${time}. Está tudo certo para você?`
     );
@@ -978,7 +1012,7 @@ export default function AdminPanel({
                           <p className="text-xs font-sans text-gold-800 font-light">
                             Agendado para:{' '}
                             <strong className="text-gold-900 font-semibold">
-                              {new Date(b.date).toLocaleDateString('pt-BR')} às {b.time}
+                              {formatDateSafe(b.date)} às {b.time}
                             </strong>{' '}
                             ({s ? s.duration : 0} min)
                           </p>
@@ -1143,7 +1177,7 @@ export default function AdminPanel({
               {blockedSlots.length > 0 ? (
                 <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
                   {blockedSlots.map((slot, idx) => {
-                    const formattedDate = new Date(`${slot.date}T00:00:00`).toLocaleDateString('pt-BR');
+                    const formattedDate = formatDateSafe(slot.date);
                     return (
                       <div
                         key={idx}
@@ -1915,11 +1949,11 @@ export default function AdminPanel({
                               Dias de Disponibilidade:
                             </span>
                             <div className="flex flex-wrap gap-1">
-                              {camp.dates.map((dStr) => {
-                                const parts = dStr.split('-');
-                                const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}` : dStr;
+                              {(camp.dates || []).map((dStr) => {
+                                const parts = typeof dStr === 'string' ? dStr.split('-') : [];
+                                const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}` : String(dStr);
                                 return (
-                                  <span key={dStr} className="bg-gold-50 border border-gold-200 text-gold-900 font-sans font-semibold text-[10px] px-2.5 py-1 rounded-lg">
+                                  <span key={String(dStr)} className="bg-gold-50 border border-gold-200 text-gold-900 font-sans font-semibold text-[10px] px-2.5 py-1 rounded-lg">
                                     {formatted}
                                   </span>
                                 );

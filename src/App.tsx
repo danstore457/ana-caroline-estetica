@@ -173,7 +173,11 @@ export default function App() {
       });
       // Sort chronologically (earliest first)
       loaded.sort((a, b) => {
-        return `${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`);
+        const dateA = a && typeof a.date === 'string' ? a.date : '';
+        const dateB = b && typeof b.date === 'string' ? b.date : '';
+        const timeA = a && typeof a.time === 'string' ? a.time : '00:00';
+        const timeB = b && typeof b.time === 'string' ? b.time : '00:00';
+        return `${dateA}T${timeA}`.localeCompare(`${dateB}T${timeB}`);
       });
       setBlockedSlots(loaded);
     }, (error) => {
@@ -183,7 +187,11 @@ export default function App() {
         try {
           const parsed = JSON.parse(storedBlocks) as BlockedSlot[];
           parsed.sort((a, b) => {
-            return `${a.date}T${a.time || '00:00'}`.localeCompare(`${b.date}T${b.time || '00:00'}`);
+            const dateA = a && typeof a.date === 'string' ? a.date : '';
+            const dateB = b && typeof b.date === 'string' ? b.date : '';
+            const timeA = a && typeof a.time === 'string' ? a.time : '00:00';
+            const timeB = b && typeof b.time === 'string' ? b.time : '00:00';
+            return `${dateA}T${timeA}`.localeCompare(`${dateB}T${timeB}`);
           });
           setBlockedSlots(parsed);
         } catch {
@@ -231,7 +239,11 @@ export default function App() {
       snapshot.forEach((doc) => {
         loaded.push(doc.data() as Booking);
       });
-      loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      loaded.sort((a, b) => {
+        const timeA = a && a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b && b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+      });
       setBookings(loaded);
     }, (error) => {
       console.error("Error fetching bookings from Firestore, falling back to local:", error);
