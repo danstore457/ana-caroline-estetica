@@ -85,16 +85,17 @@ service cloud.firestore {
 
     function isValidService(data) {
       return data.keys().hasAll(['id', 'name', 'description', 'category', 'price', 'duration'])
-        && data.keys().size() <= 9
+        && data.keys().size() <= 11
         && data.id is string && data.id.size() <= 128
         && data.name is string && data.name.size() <= 100
         && data.description is string && data.description.size() <= 1000
-        && data.category is string && (data.category == 'facial' || data.category == 'corporal' || data.category == 'olhar' || data.category == 'depilacao' || data.category == 'cursos')
+        && data.category is string && (data.category == 'facial' || data.category == 'corporal' || data.category == 'massagem' || data.category == 'olhar' || data.category == 'depilacao' || data.category == 'cursos')
         && (data.price is number || data.price is int)
         && (data.duration is number || data.duration is int)
         && (!data.keys().hasAll(['popular']) || data.popular is bool)
         && (!data.keys().hasAll(['isPackage']) || data.isPackage is bool)
-        && (!data.keys().hasAll(['sessionsCount']) || (data.sessionsCount is number || data.sessionsCount is int));
+        && (!data.keys().hasAll(['sessionsCount']) || (data.sessionsCount is number || data.sessionsCount is int))
+        && (!data.keys().hasAll(['isStartingPrice']) || data.isStartingPrice is bool);
     }
 
     function isValidCampaign(data) {

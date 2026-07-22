@@ -36,10 +36,13 @@
         "id": { "type": "string", "description": "The unique service identifier" },
         "name": { "type": "string", "description": "The name of the service", "maxLength": 100 },
         "description": { "type": "string", "description": "Detailed service description", "maxLength": 1000 },
-        "category": { "type": "string", "enum": ["facial", "corporal", "olhar", "depilacao", "cursos"], "description": "Service category" },
+        "category": { "type": "string", "enum": ["facial", "corporal", "massagem", "olhar", "depilacao", "cursos"], "description": "Service category" },
         "price": { "type": "number", "description": "Price of the service in BRL" },
         "duration": { "type": "number", "description": "Duration in minutes" },
-        "popular": { "type": "boolean", "description": "Whether the service is popular/highlighted" }
+        "popular": { "type": "boolean", "description": "Whether the service is popular/highlighted" },
+        "isPackage": { "type": "boolean", "description": "Whether the service is a multi-session package" },
+        "sessionsCount": { "type": "number", "description": "Number of sessions in package" },
+        "isStartingPrice": { "type": "boolean", "description": "Whether price is starting price" }
       },
       "required": ["id", "name", "description", "category", "price", "duration"]
     },

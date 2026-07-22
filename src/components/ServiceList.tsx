@@ -9,7 +9,7 @@ interface ServiceListProps {
 }
 
 export default function ServiceList({ onSelectService, services, campaigns = [] }: ServiceListProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'todos' | 'pacotes'>('todos');
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'populares' | 'pacotes'>('populares');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDates, setSelectedDates] = useState<Record<string, string>>({});
   const [selectedTimes, setSelectedTimes] = useState<Record<string, string>>({});
@@ -17,8 +17,8 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
   // Filter logic
   const filteredServices = services.filter((service) => {
     let matchesCategory = false;
-    if (selectedCategory === 'todos') {
-      matchesCategory = true;
+    if (selectedCategory === 'populares') {
+      matchesCategory = service.popular === true;
     } else if (selectedCategory === 'pacotes') {
       matchesCategory = service.isPackage === true;
     } else {
@@ -52,15 +52,16 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1.5 w-full lg:w-auto">
             <button
-              onClick={() => setSelectedCategory('todos')}
-              id="cat-tab-todos"
-              className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest transition-all duration-300 cursor-pointer ${
-                selectedCategory === 'todos'
+              onClick={() => setSelectedCategory('populares')}
+              id="cat-tab-populares"
+              className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest transition-all duration-300 cursor-pointer flex items-center space-x-1.5 ${
+                selectedCategory === 'populares'
                   ? 'bg-gold-900 text-white shadow-sm'
                   : 'bg-white text-gold-800 hover:bg-gold-50 border border-gold-100'
               }`}
             >
-              Todos
+              <Sparkles className="w-3 h-3 text-current" />
+              <span>Populares</span>
             </button>
 
             <button
@@ -289,7 +290,7 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
             </p>
             <button
               onClick={() => {
-                setSelectedCategory('todos');
+                setSelectedCategory('populares');
                 setSearchQuery('');
               }}
               className="text-xs text-gold-500 uppercase tracking-wider font-bold hover:text-gold-900 font-sans cursor-pointer mt-2"

@@ -1,4 +1,4 @@
-export type ServiceCategory = 'facial' | 'corporal' | 'olhar' | 'depilacao' | 'cursos';
+export type ServiceCategory = 'facial' | 'corporal' | 'massagem' | 'olhar' | 'depilacao' | 'cursos';
 
 export interface Service {
   id: string;
@@ -48,7 +48,12 @@ export const CATEGORIES: { id: ServiceCategory; label: string; description: stri
   {
     id: 'corporal',
     label: 'Estética Corporal',
-    description: 'Massagens e tecnologias voltadas para modelagem, relaxamento e redução de medidas.',
+    description: 'Procedimentos e tecnologias voltadas para modelagem, firmeza e redução de medidas.',
+  },
+  {
+    id: 'massagem',
+    label: 'Massagens',
+    description: 'Técnicas manuais relaxantes, terapêuticas e modeladoras para alívio do estresse e bem-estar.',
   },
   {
     id: 'olhar',
@@ -123,7 +128,7 @@ export const SERVICES: Service[] = [
     id: 'massagem-relaxante',
     name: 'Massagem Relaxante com Óleos',
     description: 'Massagem relaxante corporal completa utilizando óleos essenciais aquecidos. Alivia tensões musculares, estresse e promove uma profunda sensação de paz.',
-    category: 'corporal',
+    category: 'massagem',
     price: 120,
     duration: 60,
     popular: true,
@@ -134,7 +139,7 @@ export const SERVICES: Service[] = [
     id: 'ventosa-terapia',
     name: 'Ventosaterapia Terapêutica',
     description: 'Aplicação de ventosas de sucção para liberação miofascial profunda, melhora do fluxo sanguíneo, alívio de dores nas costas e liberação de toxinas acumuladas.',
-    category: 'corporal',
+    category: 'massagem',
     price: 120,
     duration: 50,
     isPackage: true,
@@ -144,7 +149,7 @@ export const SERVICES: Service[] = [
     id: 'drenagem-linfatica',
     name: 'Drenagem Linfática Corporal',
     description: 'Técnica manual suave para estimular o sistema linfático, reduzir a retenção de líquidos, desinchar o corpo e auxiliar na eliminação de toxinas do organismo.',
-    category: 'corporal',
+    category: 'massagem',
     price: 480,
     duration: 60,
     isPackage: true,
@@ -154,7 +159,7 @@ export const SERVICES: Service[] = [
     id: 'massagem-modeladora',
     name: 'Massagem Modeladora Ativa',
     description: 'Movimentos firmes, rápidos e vigorosos para ativar a circulação, auxiliar na modelagem do contorno corporal e combater a celulite e gordura localizada.',
-    category: 'corporal',
+    category: 'massagem',
     price: 600,
     duration: 50,
     isPackage: true,
@@ -164,7 +169,7 @@ export const SERVICES: Service[] = [
     id: 'massagem-dreno-modeladora',
     name: 'Massagem Dreno Modeladora',
     description: 'Protocolo exclusivo combinando drenagem linfática e manobras modeladoras intensas para desintoxicação corporal, melhora da silhueta e redução de retenção hídrica.',
-    category: 'corporal',
+    category: 'massagem',
     price: 800,
     duration: 60,
     isPackage: true,

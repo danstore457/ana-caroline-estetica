@@ -419,8 +419,14 @@ export default function App() {
   };
 
   const handleAddService = async (newService: Service) => {
+    const dataToSave: Record<string, any> = { ...newService };
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
+    });
     try {
-      await setDoc(doc(db, 'services', newService.id), newService);
+      await setDoc(doc(db, 'services', newService.id), dataToSave);
     } catch (e) {
       console.error("Error adding service:", e);
       setServices(prev => {
