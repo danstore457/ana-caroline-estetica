@@ -129,6 +129,11 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
                       <span>PACOTE COM {service.sessionsCount} SESSÕES</span>
                     </span>
                   )}
+                  {service.isStartingPrice && (
+                    <span className="inline-flex items-center bg-gold-900 text-white text-[8px] font-bold tracking-widest font-sans uppercase px-2.5 py-1 rounded-full shadow-xs">
+                      <span>A PARTIR DE / AVALIAÇÃO</span>
+                    </span>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -228,12 +233,17 @@ export default function ServiceList({ onSelectService, services, campaigns = [] 
                 <div className="mt-8 pt-5 border-t border-gold-100 flex items-center justify-between">
                   <div>
                     <span className="text-[9px] text-gold-500 font-bold tracking-wider uppercase block mb-1">
-                      {service.isPackage ? 'Valor do Pacote' : 'Investimento'}
+                      {service.isPackage ? 'Valor do Pacote' : service.isStartingPrice ? 'A partir de' : 'Investimento'}
                     </span>
                     <div className="space-y-0.5">
                       <span className="font-serif text-lg font-normal text-gold-900 block leading-none">
-                        R$ {service.price.toFixed(2).replace('.', ',')}
+                        {service.isStartingPrice ? 'A partir de ' : ''}R$ {service.price.toFixed(2).replace('.', ',')}
                       </span>
+                      {service.isStartingPrice && (
+                        <span className="text-[9.5px] text-gold-700 font-sans font-medium block leading-tight">
+                          * Sujeito a avaliação prévia
+                        </span>
+                      )}
                       {service.isPackage && service.sessionsCount && (
                         <span className="text-[9.5px] text-amber-700 font-sans font-semibold block leading-tight">
                           ({service.sessionsCount} sessões de R$ {(service.price / service.sessionsCount).toFixed(2).replace('.', ',')})

@@ -202,6 +202,7 @@ export default function AdminPanel({
   const [newServiceDuration, setNewServiceDuration] = useState('');
   const [newServicePopular, setNewServicePopular] = useState(false);
   const [newServiceIsPackage, setNewServiceIsPackage] = useState(false);
+  const [newServiceIsStartingPrice, setNewServiceIsStartingPrice] = useState(false);
   const [newServiceSessionsCount, setNewServiceSessionsCount] = useState('');
   const [newServiceIsCampaign, setNewServiceIsCampaign] = useState(false);
   const [newServiceCampDates, setNewServiceCampDates] = useState<string[]>([]);
@@ -251,6 +252,7 @@ export default function AdminPanel({
     setNewServiceDuration(s.duration.toString());
     setNewServicePopular(s.popular || false);
     setNewServiceIsPackage(s.isPackage || false);
+    setNewServiceIsStartingPrice(s.isStartingPrice || false);
     setNewServiceSessionsCount(s.sessionsCount ? s.sessionsCount.toString() : '');
 
     const camp = campaigns.find((c) => c.serviceId === s.id);
@@ -280,6 +282,7 @@ export default function AdminPanel({
     setNewServiceDuration('');
     setNewServicePopular(false);
     setNewServiceIsPackage(false);
+    setNewServiceIsStartingPrice(false);
     setNewServiceSessionsCount('');
     setNewServiceIsCampaign(false);
     setNewServiceCampDates([]);
@@ -454,6 +457,7 @@ export default function AdminPanel({
       duration: durationNum,
       popular: newServicePopular,
       isPackage: newServiceIsPackage,
+      isStartingPrice: newServiceIsStartingPrice,
     };
 
     if (newServiceIsPackage && sessionsCountNum !== undefined) {
@@ -493,6 +497,7 @@ export default function AdminPanel({
     setNewServiceDuration('');
     setNewServicePopular(false);
     setNewServiceIsPackage(false);
+    setNewServiceIsStartingPrice(false);
     setNewServiceSessionsCount('');
     setNewServiceIsCampaign(false);
     setNewServiceCampDates([]);
@@ -1512,6 +1517,20 @@ export default function AdminPanel({
                   </div>
                 </div>
 
+                {/* Starting Price Option */}
+                <div className="flex items-center space-x-2 py-1">
+                  <input
+                    type="checkbox"
+                    id="newServiceIsStartingPrice"
+                    checked={newServiceIsStartingPrice}
+                    onChange={(e) => setNewServiceIsStartingPrice(e.target.checked)}
+                    className="rounded border-gold-100 text-gold-900 focus:ring-gold-500 h-4 w-4 cursor-pointer"
+                  />
+                  <label htmlFor="newServiceIsStartingPrice" className="text-xs text-gold-900 font-sans cursor-pointer select-none">
+                    Preço "A partir de" (para serviços que exigem avaliação prévia)
+                  </label>
+                </div>
+
                 {/* Popular Highlight */}
                 <div className="flex items-center space-x-2 py-1">
                   <input
@@ -1761,6 +1780,11 @@ export default function AdminPanel({
                             Pacote ({s.sessionsCount} sessões)
                           </span>
                         )}
+                        {s.isStartingPrice && (
+                          <span className="bg-gold-100 text-gold-900 text-[8px] font-sans font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
+                            A partir de / Avaliação
+                          </span>
+                        )}
                         <span className="text-[9px] font-mono text-gold-400 font-light">ID: {s.id}</span>
                       </div>
 
@@ -1772,7 +1796,7 @@ export default function AdminPanel({
                       </div>
 
                       <div className="flex items-center space-x-4 text-[11px] font-sans text-gold-600">
-                        <span>Investimento: <strong className="text-gold-900">R$ {s.price.toFixed(2).replace('.', ',')}</strong></span>
+                        <span>Investimento: <strong className="text-gold-900">{s.isStartingPrice ? 'A partir de ' : ''}R$ {s.price.toFixed(2).replace('.', ',')}</strong></span>
                         <span className="flex items-center space-x-1 font-mono">
                           <Clock className="w-3.5 h-3.5 text-gold-400" />
                           <span>{s.duration} min</span>
@@ -1807,194 +1831,7 @@ export default function AdminPanel({
           </div>
         </div>
 
-        {/* Manage Campaigns Section */}
-        <div className="bg-white border border-gold-100 rounded-3xl p-6 md:p-8 shadow-xs space-y-6">
-          <div className="border-b border-gold-100 pb-5">
-            <h4 className="font-serif text-2xl text-gold-950 font-light tracking-wide flex items-center space-x-2.5">
-              <Calendar className="w-6 h-6 text-gold-500" />
-              <span>Gerenciar Campanhas / Agenda Especial</span>
-            </h4>
-            <p className="text-xs text-gold-800 font-light mt-1">
-              Defina as datas de disponibilidade de serviços que dependem do aluguel temporário de aparelhos (ex: Laser Day) ou eventos promocionais especiais.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-            {/* Form to Add Campaign (Col-span 5) */}
-            <div className="lg:col-span-5 bg-gold-50/40 border border-gold-100 p-6 rounded-2xl space-y-5">
-              <h5 className="font-serif text-lg font-normal text-gold-950 flex items-center space-x-2">
-                <Plus className="w-5 h-5 text-gold-500" />
-                <span>Criar Nova Campanha</span>
-              </h5>
-
-              <form onSubmit={handleCampaignSubmit} className="space-y-4">
-                {/* Select Service */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Selecione o Serviço *</label>
-                  <select
-                    value={campServiceId}
-                    onChange={(e) => setCampServiceId(e.target.value)}
-                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden"
-                    required
-                  >
-                    <option value="">Selecione o serviço...</option>
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Add Dates Block */}
-                <div className="space-y-2">
-                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">Adicionar Datas de Atendimento *</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={campDateInput}
-                      onChange={(e) => setCampDateInput(e.target.value)}
-                      className="flex-1 bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCampaignDate}
-                      className="bg-gold-900 hover:bg-gold-950 text-white text-[10px] uppercase tracking-widest font-bold px-4 py-2.5 rounded-xl transition cursor-pointer"
-                    >
-                      Adicionar
-                    </button>
-                  </div>
-
-                  {/* List of pending campaign dates */}
-                  {campDates.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 pt-2">
-                      {campDates.map((dStr) => {
-                        const parts = dStr.split('-');
-                        const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}` : dStr;
-                        return (
-                          <span
-                            key={dStr}
-                            className="inline-flex items-center space-x-1 bg-gold-900 text-white text-[10px] font-medium px-2.5 py-1 rounded-lg shadow-2xs"
-                          >
-                            <span>{formatted}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveCampaignDate(dStr)}
-                              className="hover:text-red-300 font-bold focus:outline-hidden text-[10px] ml-1 shrink-0"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-gold-500 font-sans italic leading-relaxed pt-1">
-                      Nenhuma data adicionada. Use o seletor acima para adicionar os dias que o laser estará disponível.
-                    </p>
-                  )}
-                </div>
-
-                {/* Notes */}
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500">Observações / Detalhes (Opcional)</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Ex: Máquina alugada de laser de diodo / Vagas super limitadas"
-                    value={campNotes}
-                    onChange={(e) => setCampNotes(e.target.value)}
-                    className="w-full bg-white border border-gold-100 focus:border-gold-500 rounded-xl px-3 py-2.5 text-xs focus:outline-hidden leading-relaxed resize-none"
-                  />
-                </div>
-
-                {campError && <p className="text-[10px] text-red-500 font-sans">{campError}</p>}
-                {campSuccess && <p className="text-[10px] text-emerald-600 font-sans font-medium">{campSuccess}</p>}
-
-                <button
-                  type="submit"
-                  id="submit-new-campaign-btn"
-                  className="w-full bg-gold-900 hover:bg-gold-950 text-white text-[10px] uppercase tracking-widest font-bold font-sans py-3 rounded-full transition cursor-pointer shadow-sm"
-                >
-                  Salvar Campanha
-                </button>
-              </form>
-            </div>
-
-            {/* List of Existing Campaigns (Col-span 7) */}
-            <div className="lg:col-span-7 space-y-4">
-              <h5 className="font-serif text-lg font-normal text-gold-950">Campanhas Ativas ({campaigns.length})</h5>
-
-              {campaigns.length > 0 ? (
-                <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
-                  {campaigns.map((camp) => {
-                    const s = services.find((service) => service.id === camp.serviceId);
-                    return (
-                      <div
-                        key={camp.id}
-                        id={`admin-campaign-row-${camp.id}`}
-                        className="bg-white border border-gold-100 hover:border-gold-200 p-5 rounded-2xl flex justify-between items-start gap-4 transition shadow-2xs text-left"
-                      >
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <span className="text-[8px] font-sans tracking-widest text-amber-800 uppercase font-bold bg-amber-50 border border-amber-200/50 px-2.5 py-0.5 rounded-full inline-block">
-                              Agenda Ativa
-                            </span>
-                            <h6 className="font-sans text-base font-bold text-gold-950">
-                              {s ? s.name : 'Serviço não encontrado'}
-                            </h6>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-gold-500 block">
-                              Dias de Disponibilidade:
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {(camp.dates || []).map((dStr) => {
-                                const parts = typeof dStr === 'string' ? dStr.split('-') : [];
-                                const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}` : String(dStr);
-                                return (
-                                  <span key={String(dStr)} className="bg-gold-50 border border-gold-200 text-gold-900 font-sans font-semibold text-[10px] px-2.5 py-1 rounded-lg">
-                                    {formatted}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {camp.notes && (
-                            <p className="text-xs text-gold-700 font-light italic leading-relaxed">
-                              * {camp.notes}
-                            </p>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            if (confirm('Deseja realmente excluir esta campanha especial? As datas de laser day não aparecerão mais para os clientes.')) {
-                              onDeleteCampaign(camp.id);
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-xl transition cursor-pointer shrink-0"
-                          title="Remover Campanha"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-16 border border-dashed border-gold-100 rounded-3xl text-center space-y-3 max-w-md mx-auto">
-                  <AlertCircle className="w-10 h-10 text-gold-300 mx-auto" />
-                  <h6 className="font-serif text-lg font-normal text-gold-950">Nenhuma campanha cadastrada</h6>
-                  <p className="text-xs text-gold-800 font-light px-8 leading-relaxed">
-                    Você não possui nenhuma campanha de equipamento alugado ou datas especiais no momento. Use o formulário à esquerda para cadastrar uma!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Manage Location Section */}
         <div className="bg-white border border-gold-100 rounded-3xl p-6 md:p-8 shadow-xs space-y-6">

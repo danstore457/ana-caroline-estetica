@@ -10,6 +10,7 @@ export interface Service {
   popular?: boolean;
   isPackage?: boolean;
   sessionsCount?: number;
+  isStartingPrice?: boolean;
 }
 
 export interface Booking {
@@ -92,6 +93,7 @@ export const SERVICES: Service[] = [
     category: 'facial',
     price: 90,
     duration: 30,
+    isStartingPrice: true,
   },
   {
     id: 'peeling-diamante',

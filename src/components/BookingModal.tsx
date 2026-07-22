@@ -395,10 +395,15 @@ export default function BookingModal({
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} {s.isPackage ? `[Pacote ${s.sessionsCount} sessões]` : ''} - R$ {s.price.toFixed(2).replace('.', ',')} ({s.duration} min)
+                      {s.name} {s.isPackage ? `[Pacote ${s.sessionsCount} sessões]` : ''} - {s.isStartingPrice ? 'A partir de ' : ''}R$ {s.price.toFixed(2).replace('.', ',')} ({s.duration} min)
                     </option>
                   ))}
                 </select>
+                {activeService?.isStartingPrice && (
+                  <p className="text-[10px] text-amber-800 font-sans font-medium italic pt-1">
+                    * Este procedimento possui valor a partir de R$ {activeService.price.toFixed(2).replace('.', ',')} e está sujeito a avaliação prévia.
+                  </p>
+                )}
               </div>
 
               {/* Date Selection */}
